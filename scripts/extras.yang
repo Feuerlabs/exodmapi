@@ -1,0 +1,25 @@
+
+module extras {
+       namespace "http://feuerlabs.com/ns/extras";
+       prefix ex;
+
+       import exodm {
+	   prefix exodm;
+       }
+
+       contact "tony@feuerlabs.com";
+       organization "Feuerlabs, Inc.";
+
+       revision 2013-01-09 {
+	   description "initial release";
+       }
+
+       rpc init {
+	   input {
+	       leaf value { type uint32; mandatory true; }
+	   }
+	   output {
+	       leaf result { type exodm:result-code; }
+	   }
+       }
+}

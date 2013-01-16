@@ -1,0 +1,5 @@
+
+module exodm {
+       namespace "http://feuerlabs.com/exodm";
+       prefix exodm;
+}
