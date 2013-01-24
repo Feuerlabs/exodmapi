@@ -11,7 +11,7 @@ fi
 curl -u $ADMIN_AUTH -k -X POST $URL -d @- <<EOF
 {
     "json-rpc": "2.0",
-    "method": "exodm_admin:list-accounts",
+    "method": "exodm:list-accounts",
     "id": "1",
     "params": {
 	"n": $1,

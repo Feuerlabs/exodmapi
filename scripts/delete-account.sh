@@ -13,7 +13,7 @@ fi
 curl -u $ADMIN_AUTH -k -X POST  $URL -d @- << EOF
 {
     "jsonrpc": "2.0",
-    "method": "exodm_admin:delete-account",
+    "method": "exodm:delete-account",
     "id": "1",
     "params":
     {

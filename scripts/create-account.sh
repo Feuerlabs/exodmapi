@@ -13,7 +13,7 @@ fi
 curl -u $ADMIN_AUTH -k -X POST  $URL -d @- << EOF
 {
     "jsonrpc": "2.0",
-    "method": "exodm_admin:create-account",
+    "method": "exodm:create-account",
     "id": "1",
     "params":
     {
