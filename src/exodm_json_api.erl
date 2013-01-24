@@ -56,7 +56,7 @@
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 create_account(Name, User, Mail, Passw, FullName) ->
-    json_request("exodm_admin:create-account",
+    json_request("exodm:create-account",
 		 [{"name", Name},
 		  {"admin-user", {array, [{struct, [{"uname", User},
 						    {"email", Mail},
@@ -66,7 +66,7 @@ create_account(Name, User, Mail, Passw, FullName) ->
 		 admin).
 
 list_accounts(N) when is_integer(N), N>=0 ->
-    json_request("exodm_admin:list-accounts",
+    json_request("exodm:list-accounts",
 		 [{"n", N},
 		 {"previous", ""}],
 		 integer_to_list(random()),
@@ -74,7 +74,7 @@ list_accounts(N) when is_integer(N), N>=0 ->
 		 "accounts").
 
 delete_account(Name) ->
-    json_request("exodm_admin:delete-account",
+    json_request("exodm:delete-account",
 		 [{"name", Name}],
 		 integer_to_list(random()),
 		 admin).
