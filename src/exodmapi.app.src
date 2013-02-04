@@ -1,0 +1,17 @@
+%% -*- erlang -*-
+%%
+%% Application source file for exodmapi
+%%
+{application, exodmapi,
+ [
+  {description, "Exodm Api - api functions for calling exodm"},
+  {vsn, git},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+		  sasl
+                 ]},
+  {mod, { exodm_json_api, []}},
+  {env, []}
+ ]}.

@@ -16,6 +16,14 @@
 	 list_yang_modules/2,
 	 delete_yang_module/2]).
 -export([
+	 create_user/4,
+	 list_users/1,
+	 delete_user/1,
+	 add_account_access/3,
+	 list_account_users/2,
+	 remove_account_access/3
+	]).
+-export([
 	 create_config_set/3,
 	 list_config_sets/1,
 	 delete_config_set/1,
@@ -44,7 +52,8 @@
 	 list_device_type_members/2,
 	 list_config_set_members/2
 	]).
--export([read_exodmrc/0,
+-export([set_exodmrc_dir/1,
+	 read_exodmrc/0,
 	 read_exodmrc/1,
 	 scan_exodmrc/1,
 	 parse_exodmrc/1]).
@@ -70,12 +79,62 @@ list_accounts(N) when is_integer(N), N>=0 ->
 		 [{"n", N},
 		 {"previous", ""}],
 		 integer_to_list(random()),
-		 admin,
-		 "accounts").
+		 admin).
 
 delete_account(Name) ->
     json_request("exodm:delete-account",
 		 [{"name", Name}],
+		 integer_to_list(random()),
+		 admin).
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%% Users requests
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+create_user(User, Mail, Passw, FullName) ->
+    json_request("exodm:create-user",
+		 [{"uname", User},
+		  {"email", Mail},
+		  {"password", Passw},
+		  {"fullname", FullName}],
+		 integer_to_list(random()),
+		 admin).
+
+list_users(N) ->
+    json_request("exodm:list-users",
+		 [{"n", N},
+		  {"previous", ""}],
+		 integer_to_list(random()),
+		 admin).
+
+delete_user(Name) ->
+    json_request("exodm:delete-user",
+		 [{"uname", Name}],
+		 integer_to_list(random()),
+		 admin).
+
+add_account_access(Account, Role, UserList) ->
+    json_request("exodm:add-users-to-account",
+		 [{"account", Account},
+		  {"role", Role},
+		  {"unames", {array, UserList}}],
+		 integer_to_list(random()),
+		 admin).
+
+list_account_users(Account, N) ->
+    json_request("exodm:list-account-users",
+		 [{"account", Account},
+		  {"n", N},
+		  {"previous", ""}],
+		 integer_to_list(random()),
+		 admin).
+
+remove_account_access(Account, Role, UserList) ->
+    json_request("exodm:remove-users-from-account",
+		 [{"account", Account},
+		  {"role", Role},
+		  {"unames", {array, UserList}}],
 		 integer_to_list(random()),
 		 admin).
 
@@ -104,16 +163,14 @@ list_yang_modules(N, system) when is_integer(N), N>=0 ->
 		  {"repository", "system"},
 		  {"previous", ""}],
 		 integer_to_list(random()),
-		 admin,
-		 "yang-modules");
+		 admin);
 list_yang_modules(N, user) when is_integer(N), N>=0 ->
     json_request("exodm:list-yang-modules",
 		 [{"n", N},
 		  {"repository", "user"},
 		  {"previous", ""}],
 		 integer_to_list(random()),
-		 user,
-		 "yang-modules").
+		 user).
 
 delete_yang_module(Name, Repo) ->
     json_request("exodm:delete-yang-module",
@@ -141,8 +198,7 @@ list_config_sets(N) when is_integer(N), N>=0 ->
 		 [{"n", N},
 		 {"previous", ""}],
 		 integer_to_list(random()),
-		 user,
-		 "config-sets").
+		 user).
 
 delete_config_set(Name) ->
     json_request("exodm:delete-config-set",
@@ -183,8 +239,7 @@ list_device_types(N) when is_integer(N), N>=0 ->
 		 [{"n", N},
 		  {"previous", ""}],
 		 integer_to_list(random()),
-		 user,
-		 "device-types").
+		 user).
 
 delete_device_type(Type) ->
     json_request("exodm:delete-device-type",
@@ -203,20 +258,19 @@ create_device_group(Name, Url) ->
 		 [{"name", Name}, 
 		  {"notification-url", Url}],
 		 integer_to_list(random()),
-		 user,
-		 "gid").
+		 user).
 
 list_device_groups(N) when is_integer(N), N>=0 ->
     json_request("exodm:list-device-groups",
 		 [{"n", N},
-		  {"previous", ""}],
+		  {"previous", 0}],
 		 integer_to_list(random()),
-		 user,
-		 "device-groups").
+		 user).
 
 delete_device_group(GroupName) ->
     json_request("exodm:delete-device-group",
-		 [{"name", GroupName}],
+		 %% [{"name", GroupName}], %% When delivered
+		 [{"gid", GroupName}], 
 		 integer_to_list(random()),
 		 user).
 
@@ -273,17 +327,15 @@ list_devices(N) when is_integer(N), N>=0 ->
 		 [{"n", N},
 		  {"previous", ""}],
 		integer_to_list(random()),
-		user,
-		"devices").
+		user).
 
 list_device_group_members(Group, N) when is_integer(N), N>=0 ->
     json_request("exodm:list-device-group-members",
-		 [{"name", Group},
+		 [{"gid", Group},
 		  {"n", N},
 		  {"previous", ""}],
 		integer_to_list(random()),
-		user,
-		"device-group-members").
+		user).
 
 list_device_type_members(Name, N) when is_integer(N), N>=0 ->
     json_request("exodm:list-device-type-members",
@@ -291,8 +343,7 @@ list_device_type_members(Name, N) when is_integer(N), N>=0 ->
 		  {"n", N},
 		  {"previous", ""}],
 		integer_to_list(random()),
-		user,
-		"device-type-members").
+		user).
 
 list_config_set_members(Name, N) when is_integer(N), N>=0 ->
     json_request("exodm:list-config-set-members",
@@ -300,8 +351,7 @@ list_config_set_members(Name, N) when is_integer(N), N>=0 ->
 		  {"n", N},
 		  {"previous", ""}],
 		integer_to_list(random()),
-		user,
-		"config-set-members").
+		user).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -311,9 +361,6 @@ list_config_set_members(Name, N) when is_integer(N), N>=0 ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 json_request(Request, KeyValueList, TransId, User) ->
-    json_request(Request, KeyValueList, TransId, User,0).
-
-json_request(Request, KeyValueList, TransId, User, Result) ->
     JsonRequest = json_encode(Request, KeyValueList, TransId),
     {ok, {http_response, _Version, 200, _, _Header}, Data} = 
 	http_post(JsonRequest, User),
@@ -323,20 +370,7 @@ json_request(Request, KeyValueList, TransId, User, Result) ->
     {ok, {struct, Values}} = json2:decode_string(String),
     {"jsonrpc","2.0"} = lists:keyfind("jsonrpc",1,Values),
     {"id",TransId} = lists:keyfind("id",1,Values),
-    if Result == 0 ->
-	    {"result", {struct,[{"result",0}]}} = 
-		lists:keyfind("result",1, Values),
-	    ok;
-       Result == "gid" ->
-	    {"result",{struct,[{"result",0},{"gid",GroupId}]}} = 
-		lists:keyfind("result",1, Values),
-	    GroupId;
-       true ->
-	    {"result", {struct,[{Result,{array, List}}]}} =
-		lists:keyfind("result",1, Values),
-	    ct:pal("Got ~p", [List]),
-	    List
-    end.
+    lists:keyfind("result",1, Values).
 
 json_encode(Request, KeyValueList, TransId) ->
     json2:encode({struct, [{"jsonrpc", "2.0"},
@@ -361,8 +395,18 @@ random() ->
     %% Retreive
     random:uniform(16#1000000).
 
+set_exodmrc_dir(Dir) ->
+    %% Ugly solution :-(
+    %% Find a better one ??
+    %% Using application:set/get_env didn't seem to work :-(
+    put(rcdir, Dir).
+
 read_exodmrc() ->
-    read_exodmrc(os:getenv("HOME")).
+    Dir = case get(rcdir) of
+	      undefined -> os:getenv("HOME");
+	      D-> D
+	  end,
+    read_exodmrc(Dir).
 
 read_exodmrc(false) -> read_exodmrc(".");
 read_exodmrc("") ->    read_exodmrc(".");
