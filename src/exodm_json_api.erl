@@ -12,8 +12,11 @@
 	 list_accounts/1,
 	 delete_account/1]).
 -export([
+	 create_yang_module/4,
 	 create_yang_module/3,
+	 list_yang_modules/3,
 	 list_yang_modules/2,
+	 delete_yang_module/3,
 	 delete_yang_module/2]).
 -export([
 	 create_user/4,
@@ -24,32 +27,53 @@
 	 remove_account_access/3
 	]).
 -export([
+	 create_config_set/4,
 	 create_config_set/3,
+	 list_config_sets/2,
 	 list_config_sets/1,
+	 delete_config_set/2,
 	 delete_config_set/1,
+	 add_config_set_members/3,
 	 add_config_set_members/2,
+	 remove_config_set_members/3,
 	 remove_config_set_members/2
 	]).
 -export([
+	 create_device_type/3,
 	 create_device_type/2,
+	 list_device_types/2,
 	 list_device_types/1,
+	 delete_device_type/2,
 	 delete_device_type/1
 	]).
 -export([
+	 create_device_group/3,
 	 create_device_group/2,
+	 list_device_groups/2,
 	 list_device_groups/1,
+	 delete_device_group/2,
 	 delete_device_group/1,
+	 add_device_group_members/3,
 	 add_device_group_members/2,
+	 remove_device_group_members/3,
 	 remove_device_group_members/2
 	]).
 -export([
+	 create_device/6,
 	 create_device/5,
+	 delete_device/4,
 	 delete_device/3,
+	 provision_device/5,
 	 provision_device/4,
+	 deprovision_devices/2,
 	 deprovision_devices/1,
+	 list_devices/2,
 	 list_devices/1,
+	 list_device_group_members/3,
 	 list_device_group_members/2,
+	 list_device_type_members/3,
 	 list_device_type_members/2,
+	 list_config_set_members/3,
 	 list_config_set_members/2
 	]).
 -export([set_exodmrc_dir/1,
@@ -57,7 +81,7 @@
 	 read_exodmrc/1,
 	 scan_exodmrc/1,
 	 parse_exodmrc/1]).
-	 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 %% Admin account requests
@@ -77,7 +101,7 @@ create_account(Name, User, Mail, Passw, FullName) ->
 list_accounts(N) when is_integer(N), N>=0 ->
     json_request("exodm:list-accounts",
 		 [{"n", N},
-		 {"previous", ""}],
+		  {"previous", ""}],
 		 integer_to_list(random()),
 		 admin).
 
@@ -144,38 +168,70 @@ remove_account_access(Account, Role, UserList) ->
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-create_yang_module(Name, Repo, File) ->
+create_yang_module(Account, Name, Repo, File) ->
     case file:read_file(File) of
 	{ok, Bin} ->
-	    json_request("exodm:create-yang-module",
-			 [{"name", Name},
-			  {"repository", Repo},
-			  {"yang-module", Bin}],
-			 integer_to_list(random()),
-			 user);
+	    create_yang_module1([{"account", Account},
+				 {"name", Name},
+				 {"repository", Repo},
+				 {"yang-module", Bin}]);
 	Err = {error, _Reason} ->
 	    Err
     end.
-
-list_yang_modules(N, system) when is_integer(N), N>=0 ->
-    json_request("exodm:list-yang-modules",
-		 [{"n", N},
-		  {"repository", "system"},
-		  {"previous", ""}],
-		 integer_to_list(random()),
-		 admin);
-list_yang_modules(N, user) when is_integer(N), N>=0 ->
-    json_request("exodm:list-yang-modules",
-		 [{"n", N},
-		  {"repository", "user"},
-		  {"previous", ""}],
+create_yang_module(Name, Repo, File) ->
+    case file:read_file(File) of
+	{ok, Bin} ->
+	    create_yang_module1([{"name", Name},
+				 {"repository", Repo},
+				 {"yang-module", Bin}]);
+	Err = {error, _Reason} ->
+	    Err
+    end.
+create_yang_module1(Params) when is_list(Params)->
+    json_request("exodm:create-yang-module",
+		 Params,
 		 integer_to_list(random()),
 		 user).
 
+
+list_yang_modules(Account, N, system) when is_integer(N), N>=0 ->
+    list_yang_modules1([{"account", Account},
+			{"n", N},
+			{"repository", "user"},
+			{"previous", ""}],
+		       admin);
+list_yang_modules(Account, N, user) when is_integer(N), N>=0 ->
+    list_yang_modules1([{"account", Account},
+			{"n", N},
+			{"repository", "user"},
+			{"previous", ""}],
+		       user).
+list_yang_modules(N, system) when is_integer(N), N>=0 ->
+    list_yang_modules1([{"n", N},
+			{"repository", "user"},
+			{"previous", ""}],
+		       admin);
+list_yang_modules(N, user) when is_integer(N), N>=0 ->
+    list_yang_modules1([{"n", N},
+			{"repository", "user"},
+			{"previous", ""}],
+		       user).
+list_yang_modules1(Params, Client) when is_list(Params) ->
+    json_request("exodm:list-yang-modules",
+		 Params,
+		 integer_to_list(random()),
+		 Client).
+
+delete_yang_module(Account, Name, Repo) ->
+    delete_yang_module1([{"account", Account},
+			 {"name", Name},
+			 {"repository", Repo}]).
 delete_yang_module(Name, Repo) ->
+    delete_yang_module1([{"name", Name},
+			 {"repository", Repo}]).
+delete_yang_module1(Params) when is_list(Params)->
     json_request("exodm:delete-yang-module",
-		 [{"name", Name},
-		  {"repository", Repo}],
+		 Params,
 		 integer_to_list(random()),
 		 user).
 
@@ -185,40 +241,70 @@ delete_yang_module(Name, Repo) ->
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+create_config_set(Account, Name, File, Url) ->
+    create_config_set1([{"account", Account},
+			{"name", Name},
+			{"yang", File},
+			{"notification-url", Url}]).
 create_config_set(Name, File, Url) ->
+    create_config_set1([{"name", Name},
+			{"yang", File},
+			{"notification-url", Url}]).
+create_config_set1(Params) ->
     json_request("exodm:create-config-set",
-		 [{"name", Name},
-		  {"yang", File},
-		  {"notification-url", Url}],
+		 Params,
 		 integer_to_list(random()),
 		 user).
 
+list_config_sets(Account, N) when is_integer(N), N>=0 ->
+    list_config_sets1([{"account", Account},
+		       {"n", N},
+		       {"previous", ""}]).
 list_config_sets(N) when is_integer(N), N>=0 ->
+    list_config_sets1([{"n", N},
+		       {"previous", ""}]).
+list_config_sets1(Params) when is_list(Params) ->
     json_request("exodm:list-config-sets",
-		 [{"n", N},
-		 {"previous", ""}],
+		 Params,
 		 integer_to_list(random()),
 		 user).
 
+delete_config_set(Account, Name) ->
+    delete_config_set1([{"account", Account},
+			{"name", Name}]).
 delete_config_set(Name) ->
+    delete_config_set1([{"name", Name}]).
+delete_config_set1(Params) ->
     json_request("exodm:delete-config-set",
-		 [{"name", Name}],
+		 Params,
 		 integer_to_list(random()),
 		 user).
 
+add_config_set_members(Account, Types, IDs) ->
+    add_config_set_members1([{"account", Account},
+			     {"name", {array,Types}}, 
+			     {"dev-id", {array,IDs}}]).
 add_config_set_members(Types, IDs) ->
+    add_config_set_members1([{"name", {array,Types}}, 
+			     {"dev-id", {array,IDs}}]).
+add_config_set_members1(Params) ->
     json_request("exodm:add-config-set-members",
-		 [{"name", {array,Types}}, 
-		  {"dev-id", {array,IDs}}],
+		 Params,
 		 integer_to_list(random()),
-		user).
+		 user).
 
+remove_config_set_members(Account, Types, IDs) ->
+    remove_config_set_members1([{"account", Account},
+				{"name", {array,Types}}, 
+				{"dev-id", {array,IDs}}]).
 remove_config_set_members(Types, IDs) ->
+    remove_config_set_members1([{"name", {array,Types}}, 
+				{"dev-id", {array,IDs}}]).
+remove_config_set_members1(Params) ->
     json_request("exodm:remove-config-set-members",
-		 [{"name", {array,Types}}, 
-		  {"dev-id", {array,IDs}}],
+		 Params,
 		 integer_to_list(random()),
-		user).
+		 user).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -227,25 +313,42 @@ remove_config_set_members(Types, IDs) ->
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+create_device_type(Account, Type, Protocol) ->
+    create_device_type1([{"account", Account},
+			 {"name", Type}, 
+			 {"protocol", Protocol}]).
 create_device_type(Type, Protocol) ->
+    create_device_type1([{"name", Type}, 
+			 {"protocol", Protocol}]).
+create_device_type1(Params) ->
     json_request("exodm:create-device-type",
-		 [{"name", Type}, 
-		  {"protocol", Protocol}],
+		 Params,
 		 integer_to_list(random()),
 		 user).
 
+list_device_types(Account, N) when is_integer(N), N>=0 ->
+    list_device_types1([{"account", Account},
+			{"n", N},
+			{"previous", ""}]).
 list_device_types(N) when is_integer(N), N>=0 ->
+    list_device_types1([{"n", N},
+			{"previous", ""}]).
+list_device_types1(Params) ->
     json_request("exodm:list-device-types",
-		 [{"n", N},
-		  {"previous", ""}],
+		 Params,
 		 integer_to_list(random()),
 		 user).
 
+delete_device_type(Account, Type) ->
+    delete_device_type1([{"account", Account},
+			 {"name", Type}]).
 delete_device_type(Type) ->
+    delete_device_type1([{"name", Type}]).
+delete_device_type1(Params) ->
     json_request("exodm:delete-device-type",
-		 [{"name", Type}],
+		 Params,
 		 integer_to_list(random()),
-		user).
+		 user).
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
@@ -253,38 +356,67 @@ delete_device_type(Type) ->
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+create_device_group(Account, Name, Url) ->
+    create_device_group1([{"account", Account},
+			  {"name", Name}, 
+			  {"notification-url", Url}]).
 create_device_group(Name, Url) ->
+    create_device_group1([{"name", Name}, 
+			  {"notification-url", Url}]).
+create_device_group1(Params) ->
     json_request("exodm:create-device-group",
-		 [{"name", Name}, 
-		  {"notification-url", Url}],
+		 Params,
 		 integer_to_list(random()),
 		 user).
 
+list_device_groups(Account, N) when is_integer(N), N>=0 ->
+    list_device_groups1([{"account", Account},
+			 {"n", N},
+			 {"previous", 0}]).
 list_device_groups(N) when is_integer(N), N>=0 ->
+    list_device_groups1([{"n", N},
+			 {"previous", 0}]).
+list_device_groups1(Params) ->
     json_request("exodm:list-device-groups",
-		 [{"n", N},
-		  {"previous", 0}],
+		 Params,
 		 integer_to_list(random()),
 		 user).
 
+delete_device_group(Account, GroupName) ->
+    delete_device_group1([{"account", Account},
+			  {"gid", GroupName}]).
 delete_device_group(GroupName) ->
+    delete_device_group1([{"gid", GroupName}]).
+delete_device_group1(Params) ->
     json_request("exodm:delete-device-group",
 		 %% [{"name", GroupName}], %% When delivered
-		 [{"gid", GroupName}], 
+		 Params, 
 		 integer_to_list(random()),
 		 user).
 
+add_device_group_members(Account, Groups,IDs) ->
+    add_device_group_members1([{"account", Account},
+			       {"device-groups", {array,Groups}},
+			       {"dev-id", {array,IDs}}]).
 add_device_group_members(Groups,IDs) ->
+    add_device_group_members1([{"device-groups", {array,Groups}},
+			       {"dev-id", {array,IDs}}]).
+add_device_group_members1(Params) ->
     json_request("exodm:add-device-group-members",
-		 [{"device-groups", {array,Groups}},
-		  {"dev-id", {array,IDs}}],
+		 Params,
 		 integer_to_list(random()),
 		 user).
 
+remove_device_group_members(Account, Groups,IDs) ->
+    remove_device_group_members1([{"account", Account},
+				  {"device-groups", {array,Groups}}, 
+				  {"dev-id", {array,IDs}}]).
 remove_device_group_members(Groups,IDs) ->
+    remove_device_group_members1([{"device-groups", {array,Groups}}, 
+				  {"dev-id", {array,IDs}}]).
+remove_device_group_members1(Params) ->
     json_request("exodm:remove-device-group-members",
-		 [{"device-groups", {array,Groups}}, 
-		  {"dev-id", {array,IDs}}],
+		 Params,
 		 integer_to_list(random()),
 		 user).
 
@@ -295,63 +427,113 @@ remove_device_group_members(Groups,IDs) ->
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+create_device(Account, Id, Type, ServerKey, DeviceKey, Group) ->
+    provision_device(Account, Id, Type, ServerKey, DeviceKey),
+    add_config_set_members(Account, [Type], [Id]),
+    add_device_group_members(Account, [Group],[Id]).
+
 create_device(Id, Type, ServerKey, DeviceKey, Group) ->
     provision_device(Id, Type, ServerKey, DeviceKey),
     add_config_set_members([Type], [Id]),
     add_device_group_members([Group],[Id]).
+
+delete_device(Account, Id, Type, Group) ->
+    remove_device_group_members(Account, [Group],[Id]),
+    remove_config_set_members(Account, [Type],[Id]),
+    deprovision_devices(Account, [Id]).
 
 delete_device(Id, Type, Group) ->
     remove_device_group_members([Group],[Id]),
     remove_config_set_members([Type],[Id]),
     deprovision_devices([Id]).
 
-
+provision_device(Account, Id, Type, ServerKey, DeviceKey) ->
+    provision_device1([{"account", Account},
+		       {"dev-id", Id},
+		       {"device-type", Type},
+		       {"server-key", ServerKey},
+		       {"device-key", DeviceKey},
+		       {"msisdn", "+467331231234"}]).
 provision_device(Id, Type, ServerKey, DeviceKey) ->
+    provision_device1([{"dev-id", Id},
+		       {"device-type", Type},
+		       {"server-key", ServerKey},
+		       {"device-key", DeviceKey},
+		       {"msisdn", "+467331231234"}]).
+provision_device1(Params) ->
     json_request("exodm:provision-device",
-		 [{"dev-id", Id},
-		  {"device-type", Type},
-		  {"server-key", ServerKey},
-		  {"device-key", DeviceKey},
-		  {"msisdn", "+467331231234"}],
-		integer_to_list(random()),
-		user).
+		 Params,
+		 integer_to_list(random()),
+		 user).
 
+deprovision_devices(Account, IDs) ->
+    deprovision_devices1([{"account", Account},
+			  {"dev-id", {array, IDs}}]).
 deprovision_devices(IDs) ->
+    deprovision_devices1([{"dev-id", {array, IDs}}]).
+deprovision_devices1(Params) ->
     json_request("exodm:deprovision-devices",
-		 [{"dev-id", {array, IDs}}],
+		 Params,
 		 integer_to_list(random()),
 		 user).    
 
+list_devices(Account, N) when is_integer(N), N>=0 ->
+    list_devices1([{"account", Account},
+		   {"n", N},
+		   {"previous", ""}]).
 list_devices(N) when is_integer(N), N>=0 ->
+    list_devices1([{"n", N},
+		   {"previous", ""}]).
+list_devices1(Params) ->
     json_request("exodm:list-devices",
-		 [{"n", N},
-		  {"previous", ""}],
-		integer_to_list(random()),
-		user).
+		 Params,
+		 integer_to_list(random()),
+		 user).
 
+list_device_group_members(Account, Group, N) when is_integer(N), N>=0 ->
+    list_device_group_members1([{"account", Account},
+				{"gid", Group},
+				{"n", N},
+				{"previous", ""}]).
 list_device_group_members(Group, N) when is_integer(N), N>=0 ->
+    list_device_group_members1([{"gid", Group},
+				{"n", N},
+				{"previous", ""}]).
+list_device_group_members1(Params) ->
     json_request("exodm:list-device-group-members",
-		 [{"gid", Group},
-		  {"n", N},
-		  {"previous", ""}],
-		integer_to_list(random()),
-		user).
+		 Params,
+		 integer_to_list(random()),
+		 user).
 
+list_device_type_members(Account, Name, N) when is_integer(N), N>=0 ->
+    list_device_type_members1([{"account", Account},
+			       {"name", Name},
+			       {"n", N},
+			       {"previous", ""}]).
 list_device_type_members(Name, N) when is_integer(N), N>=0 ->
+    list_device_type_members1([{"name", Name},
+			       {"n", N},
+			       {"previous", ""}]).
+list_device_type_members1(Params) ->
     json_request("exodm:list-device-type-members",
-		 [{"name", Name},
-		  {"n", N},
-		  {"previous", ""}],
-		integer_to_list(random()),
-		user).
+		 Params,
+		 integer_to_list(random()),
+		 user).
 
+list_config_set_members(Account, Name, N) when is_integer(N), N>=0 ->
+    list_config_set_members1([{"account", Account},
+			      {"name", Name},
+			      {"n", N},
+			      {"previous", ""}]).
 list_config_set_members(Name, N) when is_integer(N), N>=0 ->
+    list_config_set_members1([{"name", Name},
+			      {"n", N},
+			      {"previous", ""}]).
+list_config_set_members1(Params) ->
     json_request("exodm:list-config-set-members",
-		 [{"name", Name},
-		  {"n", N},
-		  {"previous", ""}],
-		integer_to_list(random()),
-		user).
+		 Params,
+		 integer_to_list(random()),
+		 user).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
