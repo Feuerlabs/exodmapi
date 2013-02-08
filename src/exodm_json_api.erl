@@ -139,7 +139,7 @@ delete_user(Name) ->
 		 admin).
 
 add_account_access(Account, Role, UserList) ->
-    json_request("exodm:add-account_users",
+    json_request("exodm:add-account-users",
 		 [{"account", Account},
 		  {"role", Role},
 		  {"unames", {array, UserList}}],
