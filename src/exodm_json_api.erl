@@ -171,10 +171,10 @@ remove_account_access(Account, Role, UserList) ->
 create_yang_module(Account, Name, Repo, File) ->
     case file:read_file(File) of
 	{ok, Bin} ->
-	    create_yang_module1([{"account", Account},
-				 {"name", Name},
+	    create_yang_module1([{"name", Name},
 				 {"repository", Repo},
-				 {"yang-module", Bin}]);
+				 {"yang-module", Bin},
+                                 {"account", Account}]);
 	Err = {error, _Reason} ->
 	    Err
     end.
@@ -195,16 +195,16 @@ create_yang_module1(Params) when is_list(Params)->
 
 
 list_yang_modules(Account, N, system) when is_integer(N), N>=0 ->
-    list_yang_modules1([{"account", Account},
-			{"n", N},
+    list_yang_modules1([{"n", N},
 			{"repository", "user"},
-			{"previous", ""}],
+			{"previous", ""},
+                        {"account", Account}],
 		       admin);
 list_yang_modules(Account, N, user) when is_integer(N), N>=0 ->
-    list_yang_modules1([{"account", Account},
-			{"n", N},
+    list_yang_modules1([{"n", N},
 			{"repository", "user"},
-			{"previous", ""}],
+			{"previous", ""},
+                        {"account", Account}],
 		       user).
 list_yang_modules(N, system) when is_integer(N), N>=0 ->
     list_yang_modules1([{"n", N},
@@ -223,9 +223,9 @@ list_yang_modules1(Params, Client) when is_list(Params) ->
 		 Client).
 
 delete_yang_module(Account, Name, Repo) ->
-    delete_yang_module1([{"account", Account},
-			 {"name", Name},
-			 {"repository", Repo}]).
+    delete_yang_module1([{"name", Name},
+			 {"repository", Repo},
+                         {"account", Account}]).
 delete_yang_module(Name, Repo) ->
     delete_yang_module1([{"name", Name},
 			 {"repository", Repo}]).
@@ -242,10 +242,10 @@ delete_yang_module1(Params) when is_list(Params)->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 create_config_set(Account, Name, File, Url) ->
-    create_config_set1([{"account", Account},
-			{"name", Name},
+    create_config_set1([{"name", Name},
 			{"yang", File},
-			{"notification-url", Url}]).
+			{"notification-url", Url},
+                        {"account", Account}]).
 create_config_set(Name, File, Url) ->
     create_config_set1([{"name", Name},
 			{"yang", File},
@@ -257,9 +257,9 @@ create_config_set1(Params) ->
 		 user).
 
 list_config_sets(Account, N) when is_integer(N), N>=0 ->
-    list_config_sets1([{"account", Account},
-		       {"n", N},
-		       {"previous", ""}]).
+    list_config_sets1([{"n", N},
+		       {"previous", ""},
+                       {"account", Account}]).
 list_config_sets(N) when is_integer(N), N>=0 ->
     list_config_sets1([{"n", N},
 		       {"previous", ""}]).
@@ -270,8 +270,8 @@ list_config_sets1(Params) when is_list(Params) ->
 		 user).
 
 delete_config_set(Account, Name) ->
-    delete_config_set1([{"account", Account},
-			{"name", Name}]).
+    delete_config_set1([{"name", Name},
+                        {"account", Account}]).
 delete_config_set(Name) ->
     delete_config_set1([{"name", Name}]).
 delete_config_set1(Params) ->
@@ -281,9 +281,9 @@ delete_config_set1(Params) ->
 		 user).
 
 add_config_set_members(Account, Types, IDs) ->
-    add_config_set_members1([{"account", Account},
-			     {"name", {array,Types}}, 
-			     {"dev-id", {array,IDs}}]).
+    add_config_set_members1([{"name", {array,Types}}, 
+			     {"dev-id", {array,IDs}},
+                             {"account", Account}]).
 add_config_set_members(Types, IDs) ->
     add_config_set_members1([{"name", {array,Types}}, 
 			     {"dev-id", {array,IDs}}]).
@@ -294,9 +294,9 @@ add_config_set_members1(Params) ->
 		 user).
 
 remove_config_set_members(Account, Types, IDs) ->
-    remove_config_set_members1([{"account", Account},
-				{"name", {array,Types}}, 
-				{"dev-id", {array,IDs}}]).
+    remove_config_set_members1([{"name", {array,Types}}, 
+				{"dev-id", {array,IDs}},
+                                {"account", Account}]).
 remove_config_set_members(Types, IDs) ->
     remove_config_set_members1([{"name", {array,Types}}, 
 				{"dev-id", {array,IDs}}]).
@@ -314,9 +314,9 @@ remove_config_set_members1(Params) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 create_device_type(Account, Type, Protocol) ->
-    create_device_type1([{"account", Account},
-			 {"name", Type}, 
-			 {"protocol", Protocol}]).
+    create_device_type1([{"name", Type}, 
+			 {"protocol", Protocol},
+                         {"account", Account}]).
 create_device_type(Type, Protocol) ->
     create_device_type1([{"name", Type}, 
 			 {"protocol", Protocol}]).
@@ -327,9 +327,9 @@ create_device_type1(Params) ->
 		 user).
 
 list_device_types(Account, N) when is_integer(N), N>=0 ->
-    list_device_types1([{"account", Account},
-			{"n", N},
-			{"previous", ""}]).
+    list_device_types1([{"n", N},
+			{"previous", ""},
+                        {"account", Account}]).
 list_device_types(N) when is_integer(N), N>=0 ->
     list_device_types1([{"n", N},
 			{"previous", ""}]).
@@ -340,8 +340,8 @@ list_device_types1(Params) ->
 		 user).
 
 delete_device_type(Account, Type) ->
-    delete_device_type1([{"account", Account},
-			 {"name", Type}]).
+    delete_device_type1([{"name", Type},
+                         {"account", Account}]).
 delete_device_type(Type) ->
     delete_device_type1([{"name", Type}]).
 delete_device_type1(Params) ->
@@ -357,9 +357,9 @@ delete_device_type1(Params) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 create_device_group(Account, Name, Url) ->
-    create_device_group1([{"account", Account},
-			  {"name", Name}, 
-			  {"notification-url", Url}]).
+    create_device_group1([{"name", Name}, 
+			  {"notification-url", Url},
+                          {"account", Account}]).
 create_device_group(Name, Url) ->
     create_device_group1([{"name", Name}, 
 			  {"notification-url", Url}]).
@@ -370,9 +370,9 @@ create_device_group1(Params) ->
 		 user).
 
 list_device_groups(Account, N) when is_integer(N), N>=0 ->
-    list_device_groups1([{"account", Account},
-			 {"n", N},
-			 {"previous", 0}]).
+    list_device_groups1([{"n", N},
+			 {"previous", 0},
+                         {"account", Account}]).
 list_device_groups(N) when is_integer(N), N>=0 ->
     list_device_groups1([{"n", N},
 			 {"previous", 0}]).
@@ -383,8 +383,8 @@ list_device_groups1(Params) ->
 		 user).
 
 delete_device_group(Account, GroupName) ->
-    delete_device_group1([{"account", Account},
-			  {"gid", GroupName}]).
+    delete_device_group1([{"gid", GroupName},
+                          {"account", Account}]).
 delete_device_group(GroupName) ->
     delete_device_group1([{"gid", GroupName}]).
 delete_device_group1(Params) ->
@@ -395,9 +395,9 @@ delete_device_group1(Params) ->
 		 user).
 
 add_device_group_members(Account, Groups,IDs) ->
-    add_device_group_members1([{"account", Account},
-			       {"device-groups", {array,Groups}},
-			       {"dev-id", {array,IDs}}]).
+    add_device_group_members1([{"device-groups", {array,Groups}},
+			       {"dev-id", {array,IDs}},
+                               {"account", Account}]).
 add_device_group_members(Groups,IDs) ->
     add_device_group_members1([{"device-groups", {array,Groups}},
 			       {"dev-id", {array,IDs}}]).
@@ -408,9 +408,9 @@ add_device_group_members1(Params) ->
 		 user).
 
 remove_device_group_members(Account, Groups,IDs) ->
-    remove_device_group_members1([{"account", Account},
-				  {"device-groups", {array,Groups}}, 
-				  {"dev-id", {array,IDs}}]).
+    remove_device_group_members1([{"device-groups", {array,Groups}}, 
+				  {"dev-id", {array,IDs}},
+                                  {"account", Account}]).
 remove_device_group_members(Groups,IDs) ->
     remove_device_group_members1([{"device-groups", {array,Groups}}, 
 				  {"dev-id", {array,IDs}}]).
@@ -448,12 +448,12 @@ delete_device(Id, Type, Group) ->
     deprovision_devices([Id]).
 
 provision_device(Account, Id, Type, ServerKey, DeviceKey) ->
-    provision_device1([{"account", Account},
-		       {"dev-id", Id},
+    provision_device1([{"dev-id", Id},
 		       {"device-type", Type},
 		       {"server-key", ServerKey},
 		       {"device-key", DeviceKey},
-		       {"msisdn", "+467331231234"}]).
+		       {"msisdn", "+467331231234"},
+                       {"account", Account}]).
 provision_device(Id, Type, ServerKey, DeviceKey) ->
     provision_device1([{"dev-id", Id},
 		       {"device-type", Type},
@@ -467,8 +467,8 @@ provision_device1(Params) ->
 		 user).
 
 deprovision_devices(Account, IDs) ->
-    deprovision_devices1([{"account", Account},
-			  {"dev-id", {array, IDs}}]).
+    deprovision_devices1([{"dev-id", {array, IDs}},
+                          {"account", Account}]).
 deprovision_devices(IDs) ->
     deprovision_devices1([{"dev-id", {array, IDs}}]).
 deprovision_devices1(Params) ->
@@ -478,9 +478,9 @@ deprovision_devices1(Params) ->
 		 user).    
 
 list_devices(Account, N) when is_integer(N), N>=0 ->
-    list_devices1([{"account", Account},
-		   {"n", N},
-		   {"previous", ""}]).
+    list_devices1([{"n", N},
+		   {"previous", ""},
+                   {"account", Account}]).
 list_devices(N) when is_integer(N), N>=0 ->
     list_devices1([{"n", N},
 		   {"previous", ""}]).
@@ -491,10 +491,10 @@ list_devices1(Params) ->
 		 user).
 
 list_device_group_members(Account, Group, N) when is_integer(N), N>=0 ->
-    list_device_group_members1([{"account", Account},
-				{"gid", Group},
+    list_device_group_members1([{"gid", Group},
 				{"n", N},
-				{"previous", ""}]).
+				{"previous", ""},
+                                {"account", Account}]).
 list_device_group_members(Group, N) when is_integer(N), N>=0 ->
     list_device_group_members1([{"gid", Group},
 				{"n", N},
@@ -506,10 +506,10 @@ list_device_group_members1(Params) ->
 		 user).
 
 list_device_type_members(Account, Name, N) when is_integer(N), N>=0 ->
-    list_device_type_members1([{"account", Account},
-			       {"name", Name},
+    list_device_type_members1([{"name", Name},
 			       {"n", N},
-			       {"previous", ""}]).
+			       {"previous", ""},
+                               {"account", Account}]).
 list_device_type_members(Name, N) when is_integer(N), N>=0 ->
     list_device_type_members1([{"name", Name},
 			       {"n", N},
@@ -521,10 +521,10 @@ list_device_type_members1(Params) ->
 		 user).
 
 list_config_set_members(Account, Name, N) when is_integer(N), N>=0 ->
-    list_config_set_members1([{"account", Account},
-			      {"name", Name},
+    list_config_set_members1([{"name", Name},
 			      {"n", N},
-			      {"previous", ""}]).
+			      {"previous", ""},
+                              {"account", Account}]).
 list_config_set_members(Name, N) when is_integer(N), N>=0 ->
     list_config_set_members1([{"name", Name},
 			      {"n", N},
