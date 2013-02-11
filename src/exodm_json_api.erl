@@ -10,6 +10,7 @@
 -export([
 	 create_account/5,
 	 list_accounts/1,
+	 list_account_roles/2,
 	 delete_account/1]).
 -export([
 	 create_yang_module/4,
@@ -17,7 +18,9 @@
 	 list_yang_modules/3,
 	 list_yang_modules/2,
 	 delete_yang_module/3,
-	 delete_yang_module/2]).
+	 delete_yang_module/2,
+         list_execution_permission/4,
+         list_execution_permission/3]).
 -export([
 	 create_user/4,
 	 list_users/1,
@@ -111,6 +114,14 @@ delete_account(Name) ->
 		 integer_to_list(random()),
 		 admin).
 
+list_account_roles(Account, N) when is_integer(N), N>=0 ->
+    json_request("exodm:list-account-roles",
+		 [{"account", Account},
+                  {"n", N},
+		  {"previous", ""}],
+		 integer_to_list(random()),
+		 admin).
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 %% Users requests
@@ -196,7 +207,7 @@ create_yang_module1(Params) when is_list(Params)->
 
 list_yang_modules(Account, N, system) when is_integer(N), N>=0 ->
     list_yang_modules1([{"n", N},
-			{"repository", "user"},
+			{"repository", "system"},
 			{"previous", ""},
                         {"account", Account}],
 		       admin);
@@ -208,7 +219,7 @@ list_yang_modules(Account, N, user) when is_integer(N), N>=0 ->
 		       user).
 list_yang_modules(N, system) when is_integer(N), N>=0 ->
     list_yang_modules1([{"n", N},
-			{"repository", "user"},
+			{"repository", "system"},
 			{"previous", ""}],
 		       admin);
 list_yang_modules(N, user) when is_integer(N), N>=0 ->
@@ -235,7 +246,36 @@ delete_yang_module1(Params) when is_list(Params)->
 		 integer_to_list(random()),
 		 user).
 
-%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+list_execution_permission(Account, system, Module, Rpc)  ->
+    list_execution_permission1([{"repository", "system"},
+                              {"modulename", Module},
+                              {"rpcname", Rpc},
+                              {"account", Account}],
+                             admin);
+list_execution_permission(Account, user, Module, Rpc)  ->
+    list_execution_permission1([{"repository", "user"},
+                              {"modulename", Module},
+                              {"rpcname", Rpc},
+                              {"account", Account}],
+                             user).
+list_execution_permission(system, Module, Rpc)  ->
+    list_execution_permission1([{"repository", "system"},
+                              {"modulename", Module},
+                              {"rpcname", Rpc}],
+                             admin);
+list_execution_permission(user, Module, Rpc) ->
+    list_execution_permission1([{"repository", "user"},
+                              {"modulename", Module},
+                              {"rpcname", Rpc}],
+                             user).
+list_execution_permission1(Params, Client) when is_list(Params) ->
+    json_request("exodm:list-execution-permission",
+		 Params,
+		 integer_to_list(random()),
+		 Client).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 %% Config Set
 %%
