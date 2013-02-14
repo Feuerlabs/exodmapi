@@ -8,13 +8,16 @@
 -module(exodm_json_api).
 
 -export([
-	 create_account/5,
+	 create_account/4,
 	 list_accounts/1,
+	 list_accounts/2,
 	 list_account_roles/2,
+	 list_account_roles/3,
 	 delete_account/1]).
 -export([
 	 create_yang_module/4,
 	 create_yang_module/3,
+	 list_yang_modules/4,
 	 list_yang_modules/3,
 	 list_yang_modules/2,
 	 delete_yang_module/3,
@@ -27,6 +30,7 @@
 	 delete_user/1,
 	 add_account_access/3,
 	 list_account_users/2,
+	 list_account_users/3,
 	 remove_account_access/3
 	]).
 -export([
@@ -79,6 +83,7 @@
 	 list_config_set_members/3,
 	 list_config_set_members/2
 	]).
+-export([parse_result/2]).
 -export([set_exodmrc_dir/1,
 	 read_exodmrc/0,
 	 read_exodmrc/1,
@@ -91,13 +96,12 @@
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-create_account(Name, User, Mail, Passw, FullName) ->
+create_account(Name, Mail, Passw, FullName) ->
     json_request("exodm:create-account",
 		 [{"name", Name},
-		  {"admin-user", {array, [{struct, [{"uname", User},
-						    {"email", Mail},
-						    {"password", Passw},
-						    {"fullname", FullName}]}]}}],
+                  {"email", Mail},
+                  {"password", Passw},
+                  {"fullname", FullName}],
 		 integer_to_list(random()),
 		 admin).
 
@@ -108,17 +112,33 @@ list_accounts(N) when is_integer(N), N>=0 ->
 		 integer_to_list(random()),
 		 admin).
 
+list_accounts(N, Prev) when is_integer(N), N>=0, is_list(Prev) ->
+    json_request("exodm:list-accounts",
+		 [{"n", N},
+		  {"previous", Prev}],
+		 integer_to_list(random()),
+		 admin).
+
 delete_account(Name) ->
     json_request("exodm:delete-account",
 		 [{"name", Name}],
 		 integer_to_list(random()),
 		 admin).
 
-list_account_roles(Account, N) when is_integer(N), N>=0 ->
+list_account_roles(Account, N) when is_list(Account), is_integer(N), N>=0 ->
     json_request("exodm:list-account-roles",
 		 [{"account", Account},
                   {"n", N},
 		  {"previous", ""}],
+		 integer_to_list(random()),
+		 admin).
+
+list_account_roles(Account, N, Prev) 
+  when is_list(Account), is_integer(N), N>=0, is_list(Prev) ->
+    json_request("exodm:list-account-roles",
+		 [{"account", Account},
+                  {"n", N},
+		  {"previous", Prev}],
 		 integer_to_list(random()),
 		 admin).
 
@@ -136,7 +156,7 @@ create_user(User, Mail, Passw, FullName) ->
 		 integer_to_list(random()),
 		 admin).
 
-list_users(N) ->
+list_users(N) when is_integer(N), N>=0 ->
     json_request("exodm:list-users",
 		 [{"n", N},
 		  {"previous", ""}],
@@ -157,11 +177,20 @@ add_account_access(Account, Role, UserList) ->
 		 integer_to_list(random()),
 		 admin).
 
-list_account_users(Account, N) ->
+list_account_users(Account, N) when is_list(Account), is_integer(N), N>=0 ->
     json_request("exodm:list-account-users",
 		 [{"account", Account},
 		  {"n", N},
 		  {"previous", ""}],
+		 integer_to_list(random()),
+		 admin).
+
+list_account_users(Account, N, Prev) 
+  when is_list(Account), is_integer(N), N>=0, is_list(Prev) ->
+    json_request("exodm:list-account-users",
+		 [{"account", Account},
+		  {"n", N},
+		  {"previous", Prev}],
 		 integer_to_list(random()),
 		 admin).
 
@@ -192,8 +221,8 @@ create_yang_module(Account, Name, Repo, File) ->
 create_yang_module(Name, Repo, File) ->
     case file:read_file(File) of
 	{ok, Bin} ->
-	    create_yang_module1([{"name", Name},
-				 {"repository", Repo},
+	    create_yang_module1([{"repository", Repo},
+				 {"name", Name},
 				 {"yang-module", Bin}]);
 	Err = {error, _Reason} ->
 	    Err
@@ -205,24 +234,50 @@ create_yang_module1(Params) when is_list(Params)->
 		 user).
 
 
-list_yang_modules(Account, N, system) when is_integer(N), N>=0 ->
+list_yang_modules(Account, system, N) 
+  when is_list(Account), is_integer(N), N>=0 ->
     list_yang_modules1([{"n", N},
 			{"repository", "system"},
 			{"previous", ""},
                         {"account", Account}],
 		       admin);
-list_yang_modules(Account, N, user) when is_integer(N), N>=0 ->
+list_yang_modules(Account, user, N) 
+  when is_list(Account), is_integer(N), N>=0 ->
     list_yang_modules1([{"n", N},
 			{"repository", "user"},
 			{"previous", ""},
                         {"account", Account}],
+		       user);
+list_yang_modules(system, N, Prev) when is_integer(N), N>=0, is_list(Prev) ->
+    list_yang_modules1([{"n", N},
+			{"repository", "system"},
+			{"previous", Prev}],
+		       admin);
+list_yang_modules(user, N, Prev) when is_integer(N), N>=0, is_list(Prev) ->
+    list_yang_modules1([{"n", N},
+			{"repository", "user"},
+			{"previous", Prev}],
 		       user).
-list_yang_modules(N, system) when is_integer(N), N>=0 ->
+list_yang_modules(Account, system, N, Prev) 
+  when is_list(Account), is_integer(N), N>=0, is_list(Prev) ->
+    list_yang_modules1([{"n", N},
+			{"repository", "system"},
+			{"previous", Prev},
+                        {"account", Account}],
+		       admin);
+list_yang_modules(Account, user, N, Prev) 
+  when is_list(Account), is_integer(N), N>=0, is_list(Prev) ->
+    list_yang_modules1([{"n", N},
+			{"repository", "user"},
+			{"previous", Prev},
+                        {"account", Account}],
+		       user).
+list_yang_modules(system, N) when is_integer(N), N>=0 ->
     list_yang_modules1([{"n", N},
 			{"repository", "system"},
 			{"previous", ""}],
 		       admin);
-list_yang_modules(N, user) when is_integer(N), N>=0 ->
+list_yang_modules(user, N) when is_integer(N), N>=0 ->
     list_yang_modules1([{"n", N},
 			{"repository", "user"},
 			{"previous", ""}],
@@ -611,12 +666,36 @@ http_post(Request, UserType) ->
 		   iolist_to_binary(Request)).
 
 
-random() ->
-    %% Initialize
-    random:seed(now()),
-    %% Retreive
-    random:uniform(16#1000000).
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%% Parse json result
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+parse_result(ResultStruct, "ok") ->
+    {"result", {struct,[{"result", "ok"}]}} = ResultStruct,
+    ok;
+parse_result(ResultStruct, {item, Item}) ->
+    {"result",{struct,[{"result","ok"},{Item,Value}]}} = ResultStruct,
+    Value;
+parse_result(ResultStruct, {list, Items}) ->
+    %% List result
+    {"result", {struct,[{Items,{array, List}}]}} = ResultStruct,
+    List;
+parse_result(ResultStruct, {error, Reason}) ->
+    {"result",{struct,[{"result", Reason}]}} = ResultStruct,
+    ok;
+parse_result(_ResultStruct, any) ->
+    %% Don't check result
+    ok;
+parse_result(ResultStruct, _Other) ->
+    %% Return everything
+    ResultStruct.
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%% .exodmrc handling
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 set_exodmrc_dir(Dir) ->
     %% Ugly solution :-(
     %% Find a better one ??
@@ -663,3 +742,17 @@ scan_exodmrc(Bin) ->
 		  [L | _] -> [binary:split(L,<<"=">>) | Acc]
 	      end
       end, [],binary:split(Bin, <<"\n">>, [global])).
+
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%%
+%% Util
+%%
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+random() ->
+    %% Initialize
+    random:seed(now()),
+    %% Retreive
+    random:uniform(16#1000000).
+
+
