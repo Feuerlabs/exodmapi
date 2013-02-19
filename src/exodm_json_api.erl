@@ -7,12 +7,14 @@
 
 -module(exodm_json_api).
 
+-include_lib("lager/include/log.hrl").
+
 -export([
 	 create_account/4,
-	 list_accounts/1,
 	 list_accounts/2,
-	 list_account_roles/2,
+	 list_accounts/1,
 	 list_account_roles/3,
+	 list_account_roles/2,
 	 delete_account/1]).
 -export([
 	 create_yang_module/4,
@@ -20,6 +22,8 @@
 	 list_yang_modules/4,
 	 list_yang_modules/3,
 	 list_yang_modules/2,
+	 lookup_yang_module/3,
+	 lookup_yang_module/2,
 	 delete_yang_module/3,
 	 delete_yang_module/2,
          list_execution_permission/4,
@@ -36,6 +40,7 @@
 -export([
 	 create_config_set/4,
 	 create_config_set/3,
+	 list_config_sets/3,
 	 list_config_sets/2,
 	 list_config_sets/1,
 	 delete_config_set/2,
@@ -48,6 +53,7 @@
 -export([
 	 create_device_type/3,
 	 create_device_type/2,
+	 list_device_types/3,
 	 list_device_types/2,
 	 list_device_types/1,
 	 delete_device_type/2,
@@ -56,6 +62,7 @@
 -export([
 	 create_device_group/3,
 	 create_device_group/2,
+	 list_device_groups/3,
 	 list_device_groups/2,
 	 list_device_groups/1,
 	 delete_device_group/2,
@@ -74,12 +81,16 @@
 	 provision_device/4,
 	 deprovision_devices/2,
 	 deprovision_devices/1,
+	 list_devices/3,
 	 list_devices/2,
 	 list_devices/1,
+	 list_device_group_members/4,
 	 list_device_group_members/3,
 	 list_device_group_members/2,
+	 list_device_type_members/4,
 	 list_device_type_members/3,
 	 list_device_type_members/2,
+	 list_config_set_members/4,
 	 list_config_set_members/3,
 	 list_config_set_members/2
 	]).
@@ -90,13 +101,15 @@
 	 scan_exodmrc/1,
 	 parse_exodmrc/1]).
 
+
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %%
 %% Admin account requests
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-create_account(Name, Mail, Passw, FullName) ->
+create_account(Name, Mail, Passw, FullName) 
+  when is_list(Name), is_list(Mail), is_list(Passw), is_list(FullName) ->
     json_request("exodm:create-account",
 		 [{"name", Name},
                   {"email", Mail},
@@ -105,27 +118,31 @@ create_account(Name, Mail, Passw, FullName) ->
 		 integer_to_list(random()),
 		 admin).
 
-list_accounts(N) when is_integer(N), N>=0 ->
+list_accounts(N) 
+  when is_integer(N), N>=0 ->
     json_request("exodm:list-accounts",
 		 [{"n", N},
 		  {"previous", ""}],
 		 integer_to_list(random()),
 		 admin).
 
-list_accounts(N, Prev) when is_integer(N), N>=0, is_list(Prev) ->
+list_accounts(N, Prev) 
+  when is_integer(N), N>=0, is_list(Prev) ->
     json_request("exodm:list-accounts",
 		 [{"n", N},
 		  {"previous", Prev}],
 		 integer_to_list(random()),
 		 admin).
 
-delete_account(Name) ->
+delete_account(Name)
+  when is_list(Name) ->
     json_request("exodm:delete-account",
 		 [{"name", Name}],
 		 integer_to_list(random()),
 		 admin).
 
-list_account_roles(Account, N) when is_list(Account), is_integer(N), N>=0 ->
+list_account_roles(Account, N)
+  when is_list(Account), is_integer(N), N>=0 ->
     json_request("exodm:list-account-roles",
 		 [{"account", Account},
                   {"n", N},
@@ -147,29 +164,33 @@ list_account_roles(Account, N, Prev)
 %% Users requests
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-create_user(User, Mail, Passw, FullName) ->
+create_user(Name, Mail, Passw, FullName) 
+  when is_list(Name), is_list(Mail), is_list(Passw), is_list(FullName)->
     json_request("exodm:create-user",
-		 [{"uname", User},
+		 [{"uname", Name},
 		  {"email", Mail},
 		  {"password", Passw},
 		  {"fullname", FullName}],
 		 integer_to_list(random()),
 		 admin).
 
-list_users(N) when is_integer(N), N>=0 ->
+list_users(N) 
+  when is_integer(N), N>=0 ->
     json_request("exodm:list-users",
 		 [{"n", N},
 		  {"previous", ""}],
 		 integer_to_list(random()),
 		 admin).
 
-delete_user(Name) ->
+delete_user(Name) 
+  when is_list(Name) ->
     json_request("exodm:delete-user",
 		 [{"uname", Name}],
 		 integer_to_list(random()),
 		 admin).
 
-add_account_access(Account, Role, UserList) ->
+add_account_access(Account, Role, UserList) 
+  when is_list(Account), is_list(Role), is_list(UserList) ->
     json_request("exodm:add-account-users",
 		 [{"account", Account},
 		  {"role", Role},
@@ -177,7 +198,8 @@ add_account_access(Account, Role, UserList) ->
 		 integer_to_list(random()),
 		 admin).
 
-list_account_users(Account, N) when is_list(Account), is_integer(N), N>=0 ->
+list_account_users(Account, N) 
+  when is_list(Account), is_integer(N), N>=0 ->
     json_request("exodm:list-account-users",
 		 [{"account", Account},
 		  {"n", N},
@@ -194,7 +216,8 @@ list_account_users(Account, N, Prev)
 		 integer_to_list(random()),
 		 admin).
 
-remove_account_access(Account, Role, UserList) ->
+remove_account_access(Account, Role, UserList) 
+  when is_list(Account), is_list(Role), is_list(UserList) ->
     json_request("exodm:remove-account-users",
 		 [{"account", Account},
 		  {"role", Role},
@@ -208,7 +231,8 @@ remove_account_access(Account, Role, UserList) ->
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-create_yang_module(Account, Name, Repo, File) ->
+create_yang_module(Account, Name, Repo, File) 
+  when is_list(Account), is_list(Name), is_list(Repo), is_list(File) ->
     case file:read_file(File) of
 	{ok, Bin} ->
 	    create_yang_module1([{"name", Name},
@@ -218,7 +242,8 @@ create_yang_module(Account, Name, Repo, File) ->
 	Err = {error, _Reason} ->
 	    Err
     end.
-create_yang_module(Name, Repo, File) ->
+create_yang_module(Name, Repo, File)  
+  when is_list(Name), is_list(Repo), is_list(File) ->
     case file:read_file(File) of
 	{ok, Bin} ->
 	    create_yang_module1([{"repository", Repo},
@@ -234,65 +259,63 @@ create_yang_module1(Params) when is_list(Params)->
 		 user).
 
 
-list_yang_modules(Account, system, N) 
-  when is_list(Account), is_integer(N), N>=0 ->
+list_yang_modules(Account, Repo, N, Prev) 
+  when is_list(Account), is_list(Repo), is_integer(N), N>=0, is_list(Prev) ->
     list_yang_modules1([{"n", N},
-			{"repository", "system"},
-			{"previous", ""},
-                        {"account", Account}],
-		       admin);
-list_yang_modules(Account, user, N) 
-  when is_list(Account), is_integer(N), N>=0 ->
-    list_yang_modules1([{"n", N},
-			{"repository", "user"},
-			{"previous", ""},
-                        {"account", Account}],
-		       user);
-list_yang_modules(system, N, Prev) when is_integer(N), N>=0, is_list(Prev) ->
-    list_yang_modules1([{"n", N},
-			{"repository", "system"},
-			{"previous", Prev}],
-		       admin);
-list_yang_modules(user, N, Prev) when is_integer(N), N>=0, is_list(Prev) ->
-    list_yang_modules1([{"n", N},
-			{"repository", "user"},
-			{"previous", Prev}],
-		       user).
-list_yang_modules(Account, system, N, Prev) 
-  when is_list(Account), is_integer(N), N>=0, is_list(Prev) ->
-    list_yang_modules1([{"n", N},
-			{"repository", "system"},
+			{"repository", Repo},
 			{"previous", Prev},
                         {"account", Account}],
-		       admin);
-list_yang_modules(Account, user, N, Prev) 
-  when is_list(Account), is_integer(N), N>=0, is_list(Prev) ->
+		       Repo).
+list_yang_modules(Account, Repo, N) 
+  when is_list(Account), is_list(Repo), is_integer(N), N>=0 ->
     list_yang_modules1([{"n", N},
-			{"repository", "user"},
-			{"previous", Prev},
+			{"repository", Repo},
+			{"previous", ""},
                         {"account", Account}],
-		       user).
-list_yang_modules(system, N) when is_integer(N), N>=0 ->
+		       Repo);
+list_yang_modules(Repo, N, Prev) 
+  when is_list(Repo), is_integer(N), N>=0, is_list(Prev) ->
     list_yang_modules1([{"n", N},
-			{"repository", "system"},
-			{"previous", ""}],
-		       admin);
-list_yang_modules(user, N) when is_integer(N), N>=0 ->
+			{"repository", Repo},
+			{"previous", Prev}],
+		       Repo).
+list_yang_modules(Repo, N) 
+  when is_list(Repo), is_integer(N), N>=0 ->
     list_yang_modules1([{"n", N},
-			{"repository", "user"},
+			{"repository", Repo},
 			{"previous", ""}],
-		       user).
-list_yang_modules1(Params, Client) when is_list(Params) ->
+		       Repo).
+list_yang_modules1(Params, Repo) when is_list(Params) ->
     json_request("exodm:list-yang-modules",
 		 Params,
 		 integer_to_list(random()),
-		 Client).
+		 client(Repo)).
 
-delete_yang_module(Account, Name, Repo) ->
+lookup_yang_module(Account, Repo, Name) 
+  when is_list(Account), is_list(Repo), is_list(Name) ->
+    lookup_yang_module1([{"repository", Repo},
+			{"name", Name},
+                        {"account", Account}],
+		       Repo).
+lookup_yang_module(Repo, Name) 
+  when is_list(Repo), is_list(Name) ->
+    lookup_yang_module1([{"repository", Repo},
+                         {"name", Name}],
+                        Repo).
+lookup_yang_module1(Params, Repo) when is_list(Params) ->
+    json_request("exodm:lookup-yang-module",
+		 Params,
+		 integer_to_list(random()),
+		 client(Repo)).
+
+
+delete_yang_module(Account, Name, Repo) 
+  when is_list(Account), is_list(Name), is_list(Repo) ->
     delete_yang_module1([{"name", Name},
 			 {"repository", Repo},
                          {"account", Account}]).
-delete_yang_module(Name, Repo) ->
+delete_yang_module(Name, Repo) 
+  when is_list(Name), is_list(Repo) ->
     delete_yang_module1([{"name", Name},
 			 {"repository", Repo}]).
 delete_yang_module1(Params) when is_list(Params)->
@@ -301,33 +324,24 @@ delete_yang_module1(Params) when is_list(Params)->
 		 integer_to_list(random()),
 		 user).
 
-list_execution_permission(Account, system, Module, Rpc)  ->
-    list_execution_permission1([{"repository", "system"},
+list_execution_permission(Account, Repo, Module, Rpc) 
+  when is_list(Account), is_list(Module), is_list(Rpc) ->
+    list_execution_permission1([{"repository", Repo},
                               {"modulename", Module},
                               {"rpcname", Rpc},
                               {"account", Account}],
-                             admin);
-list_execution_permission(Account, user, Module, Rpc)  ->
-    list_execution_permission1([{"repository", "user"},
-                              {"modulename", Module},
-                              {"rpcname", Rpc},
-                              {"account", Account}],
-                             user).
-list_execution_permission(system, Module, Rpc)  ->
-    list_execution_permission1([{"repository", "system"},
+                             Repo).
+list_execution_permission(Repo, Module, Rpc) 
+  when is_list(Module), is_list(Rpc) ->
+    list_execution_permission1([{"repository", Repo},
                               {"modulename", Module},
                               {"rpcname", Rpc}],
-                             admin);
-list_execution_permission(user, Module, Rpc) ->
-    list_execution_permission1([{"repository", "user"},
-                              {"modulename", Module},
-                              {"rpcname", Rpc}],
-                             user).
-list_execution_permission1(Params, Client) when is_list(Params) ->
+                             Repo).
+list_execution_permission1(Params, Repo) when is_list(Params) ->
     json_request("exodm:list-execution-permission",
 		 Params,
 		 integer_to_list(random()),
-		 Client).
+		 client(Repo)).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -336,12 +350,14 @@ list_execution_permission1(Params, Client) when is_list(Params) ->
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-create_config_set(Account, Name, File, Url) ->
+create_config_set(Account, Name, File, Url) 
+  when is_list(Account), is_list(Name), is_list(File), is_list(Url) ->
     create_config_set1([{"name", Name},
 			{"yang", File},
 			{"notification-url", Url},
                         {"account", Account}]).
-create_config_set(Name, File, Url) ->
+create_config_set(Name, File, Url)  
+  when is_list(Name), is_list(File), is_list(Url) ->
     create_config_set1([{"name", Name},
 			{"yang", File},
 			{"notification-url", Url}]).
@@ -351,11 +367,22 @@ create_config_set1(Params) ->
 		 integer_to_list(random()),
 		 user).
 
-list_config_sets(Account, N) when is_integer(N), N>=0 ->
+list_config_sets(Account, N, Prev) 
+  when is_list(Account), is_integer(N), N>=0, is_list(Prev) ->
+    list_config_sets1([{"n", N},
+		       {"previous", Prev},
+                       {"account", Account}]).
+list_config_sets(Account, N) 
+  when is_list(Account), is_integer(N), N>=0 ->
     list_config_sets1([{"n", N},
 		       {"previous", ""},
-                       {"account", Account}]).
-list_config_sets(N) when is_integer(N), N>=0 ->
+                       {"account", Account}]);
+list_config_sets(N, Prev) 
+  when is_integer(N), N>=0, is_list(Prev) ->
+    list_config_sets1([{"n", N},
+		       {"previous", Prev}]).
+list_config_sets(N) 
+  when is_integer(N), N>=0 ->
     list_config_sets1([{"n", N},
 		       {"previous", ""}]).
 list_config_sets1(Params) when is_list(Params) ->
@@ -364,10 +391,12 @@ list_config_sets1(Params) when is_list(Params) ->
 		 integer_to_list(random()),
 		 user).
 
-delete_config_set(Account, Name) ->
+delete_config_set(Account, Name) 
+  when is_list(Account), is_list(Name) ->
     delete_config_set1([{"name", Name},
                         {"account", Account}]).
-delete_config_set(Name) ->
+delete_config_set(Name) 
+  when is_list(Name) ->
     delete_config_set1([{"name", Name}]).
 delete_config_set1(Params) ->
     json_request("exodm:delete-config-set",
@@ -375,11 +404,13 @@ delete_config_set1(Params) ->
 		 integer_to_list(random()),
 		 user).
 
-add_config_set_members(Account, Types, IDs) ->
+add_config_set_members(Account, Types, IDs) 
+  when is_list(Account), is_list(Types), is_list(IDs) ->
     add_config_set_members1([{"name", {array,Types}}, 
 			     {"dev-id", {array,IDs}},
                              {"account", Account}]).
-add_config_set_members(Types, IDs) ->
+add_config_set_members(Types, IDs)  
+  when is_list(Types), is_list(IDs) ->
     add_config_set_members1([{"name", {array,Types}}, 
 			     {"dev-id", {array,IDs}}]).
 add_config_set_members1(Params) ->
@@ -388,11 +419,13 @@ add_config_set_members1(Params) ->
 		 integer_to_list(random()),
 		 user).
 
-remove_config_set_members(Account, Types, IDs) ->
+remove_config_set_members(Account, Types, IDs) 
+  when is_list(Account), is_list(Types), is_list(IDs) ->
     remove_config_set_members1([{"name", {array,Types}}, 
 				{"dev-id", {array,IDs}},
                                 {"account", Account}]).
-remove_config_set_members(Types, IDs) ->
+remove_config_set_members(Types, IDs)   
+  when is_list(Types), is_list(IDs) ->
     remove_config_set_members1([{"name", {array,Types}}, 
 				{"dev-id", {array,IDs}}]).
 remove_config_set_members1(Params) ->
@@ -408,11 +441,13 @@ remove_config_set_members1(Params) ->
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-create_device_type(Account, Type, Protocol) ->
+create_device_type(Account, Type, Protocol) 
+  when is_list(Account), is_list(Type), is_list(Protocol) ->
     create_device_type1([{"name", Type}, 
 			 {"protocol", Protocol},
                          {"account", Account}]).
-create_device_type(Type, Protocol) ->
+create_device_type(Type, Protocol)  
+  when is_list(Type), is_list(Protocol) ->
     create_device_type1([{"name", Type}, 
 			 {"protocol", Protocol}]).
 create_device_type1(Params) ->
@@ -421,11 +456,22 @@ create_device_type1(Params) ->
 		 integer_to_list(random()),
 		 user).
 
-list_device_types(Account, N) when is_integer(N), N>=0 ->
+list_device_types(Account, N, Prev) 
+  when is_list(Account), is_integer(N), N>=0, is_list(Prev) ->
+    list_device_types1([{"n", N},
+			{"previous", Prev},
+                        {"account", Account}]).
+list_device_types(N, Prev) 
+  when is_integer(N), N>=0, is_list(Prev) ->
+    list_device_types1([{"n", N},
+			{"previous", Prev}]);
+list_device_types(Account, N) 
+  when is_list(Account), is_integer(N), N>=0 ->
     list_device_types1([{"n", N},
 			{"previous", ""},
                         {"account", Account}]).
-list_device_types(N) when is_integer(N), N>=0 ->
+list_device_types(N) 
+  when is_integer(N), N>=0 ->
     list_device_types1([{"n", N},
 			{"previous", ""}]).
 list_device_types1(Params) ->
@@ -434,10 +480,12 @@ list_device_types1(Params) ->
 		 integer_to_list(random()),
 		 user).
 
-delete_device_type(Account, Type) ->
+delete_device_type(Account, Type) 
+  when is_list(Account), is_list(Type) ->
     delete_device_type1([{"name", Type},
                          {"account", Account}]).
-delete_device_type(Type) ->
+delete_device_type(Type)  
+  when is_list(Type) ->
     delete_device_type1([{"name", Type}]).
 delete_device_type1(Params) ->
     json_request("exodm:delete-device-type",
@@ -451,11 +499,13 @@ delete_device_type1(Params) ->
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-create_device_group(Account, Name, Url) ->
+create_device_group(Account, Name, Url) 
+  when is_list(Account), is_list(Name), is_list(Url) ->
     create_device_group1([{"name", Name}, 
 			  {"notification-url", Url},
                           {"account", Account}]).
-create_device_group(Name, Url) ->
+create_device_group(Name, Url)  
+  when is_list(Name), is_list(Url) ->
     create_device_group1([{"name", Name}, 
 			  {"notification-url", Url}]).
 create_device_group1(Params) ->
@@ -464,11 +514,23 @@ create_device_group1(Params) ->
 		 integer_to_list(random()),
 		 user).
 
-list_device_groups(Account, N) when is_integer(N), N>=0 ->
+%% Change gaurds when using name istead of id!!!
+list_device_groups(Account, N, Prev) 
+  when is_list(Account), is_integer(N), N>=0, is_integer(Prev) ->
+    list_device_groups1([{"n", N},
+			 {"previous", Prev},
+                         {"account", Account}]).
+list_device_groups(N, Prev) 
+  when is_integer(N), N>=0, is_integer(Prev) ->
+    list_device_groups1([{"n", N},
+			 {"previous", Prev}]);
+list_device_groups(Account, N) 
+  when is_list(Account), is_integer(N), N>=0 ->
     list_device_groups1([{"n", N},
 			 {"previous", 0},
                          {"account", Account}]).
-list_device_groups(N) when is_integer(N), N>=0 ->
+list_device_groups(N) 
+  when is_integer(N), N>=0 ->
     list_device_groups1([{"n", N},
 			 {"previous", 0}]).
 list_device_groups1(Params) ->
@@ -477,10 +539,13 @@ list_device_groups1(Params) ->
 		 integer_to_list(random()),
 		 user).
 
-delete_device_group(Account, GroupName) ->
+%% Change gaurds when using name istead of id!!!
+delete_device_group(Account, GroupName) 
+  when is_list(Account), is_integer(GroupName) ->
     delete_device_group1([{"gid", GroupName},
                           {"account", Account}]).
-delete_device_group(GroupName) ->
+delete_device_group(GroupName)  
+  when is_integer(GroupName) ->
     delete_device_group1([{"gid", GroupName}]).
 delete_device_group1(Params) ->
     json_request("exodm:delete-device-group",
@@ -489,11 +554,13 @@ delete_device_group1(Params) ->
 		 integer_to_list(random()),
 		 user).
 
-add_device_group_members(Account, Groups,IDs) ->
+add_device_group_members(Account, Groups, IDs) 
+  when is_list(Account), is_list(Groups), is_list(IDs) ->
     add_device_group_members1([{"device-groups", {array,Groups}},
 			       {"dev-id", {array,IDs}},
                                {"account", Account}]).
-add_device_group_members(Groups,IDs) ->
+add_device_group_members(Groups,IDs)  
+  when is_list(Groups), is_list(IDs) ->
     add_device_group_members1([{"device-groups", {array,Groups}},
 			       {"dev-id", {array,IDs}}]).
 add_device_group_members1(Params) ->
@@ -502,11 +569,13 @@ add_device_group_members1(Params) ->
 		 integer_to_list(random()),
 		 user).
 
-remove_device_group_members(Account, Groups,IDs) ->
+remove_device_group_members(Account, Groups, IDs) 
+  when is_list(Account), is_list(Groups), is_list(IDs) ->
     remove_device_group_members1([{"device-groups", {array,Groups}}, 
 				  {"dev-id", {array,IDs}},
                                   {"account", Account}]).
-remove_device_group_members(Groups,IDs) ->
+remove_device_group_members(Groups, IDs)   
+  when is_list(Groups), is_list(IDs) ->
     remove_device_group_members1([{"device-groups", {array,Groups}}, 
 				  {"dev-id", {array,IDs}}]).
 remove_device_group_members1(Params) ->
@@ -522,34 +591,40 @@ remove_device_group_members1(Params) ->
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-create_device(Account, Id, Type, ServerKey, DeviceKey, Group) ->
+create_device(Account, Id, Type, ServerKey, DeviceKey, Group) 
+  when is_list(Account), is_list(Id), is_list(Type), is_integer(Group) ->
     provision_device(Account, Id, Type, ServerKey, DeviceKey),
     add_config_set_members(Account, [Type], [Id]),
     add_device_group_members(Account, [Group],[Id]).
 
-create_device(Id, Type, ServerKey, DeviceKey, Group) ->
+create_device(Id, Type, ServerKey, DeviceKey, Group)  
+  when is_list(Id), is_list(Type), is_integer(Group) ->
     provision_device(Id, Type, ServerKey, DeviceKey),
     add_config_set_members([Type], [Id]),
     add_device_group_members([Group],[Id]).
 
-delete_device(Account, Id, Type, Group) ->
+delete_device(Account, Id, Type, Group) 
+  when is_list(Account), is_list(Id), is_list(Type), is_integer(Group) ->
     remove_device_group_members(Account, [Group],[Id]),
     remove_config_set_members(Account, [Type],[Id]),
     deprovision_devices(Account, [Id]).
 
-delete_device(Id, Type, Group) ->
+delete_device(Id, Type, Group) 
+  when is_list(Id), is_list(Type), is_integer(Group) ->
     remove_device_group_members([Group],[Id]),
     remove_config_set_members([Type],[Id]),
     deprovision_devices([Id]).
 
-provision_device(Account, Id, Type, ServerKey, DeviceKey) ->
+provision_device(Account, Id, Type, ServerKey, DeviceKey) 
+  when is_list(Account), is_list(Id), is_list(Type) ->
     provision_device1([{"dev-id", Id},
 		       {"device-type", Type},
 		       {"server-key", ServerKey},
 		       {"device-key", DeviceKey},
 		       {"msisdn", "+467331231234"},
                        {"account", Account}]).
-provision_device(Id, Type, ServerKey, DeviceKey) ->
+provision_device(Id, Type, ServerKey, DeviceKey) 
+  when is_list(Id), is_list(Type)->
     provision_device1([{"dev-id", Id},
 		       {"device-type", Type},
 		       {"server-key", ServerKey},
@@ -561,10 +636,12 @@ provision_device1(Params) ->
 		 integer_to_list(random()),
 		 user).
 
-deprovision_devices(Account, IDs) ->
+deprovision_devices(Account, IDs) 
+  when is_list(Account), is_list(IDs) ->
     deprovision_devices1([{"dev-id", {array, IDs}},
                           {"account", Account}]).
-deprovision_devices(IDs) ->
+deprovision_devices(IDs) 
+  when is_list(IDs) ->
     deprovision_devices1([{"dev-id", {array, IDs}}]).
 deprovision_devices1(Params) ->
     json_request("exodm:deprovision-devices",
@@ -572,11 +649,22 @@ deprovision_devices1(Params) ->
 		 integer_to_list(random()),
 		 user).    
 
-list_devices(Account, N) when is_integer(N), N>=0 ->
+list_devices(Account, N, Prev) 
+  when is_list(Account), is_integer(N), N>=0, is_list(Prev) ->
+    list_devices1([{"n", N},
+		   {"previous", Prev},
+                   {"account", Account}]).
+list_devices(N, Prev) 
+  when is_integer(N), N>=0, is_list(Prev) ->
+    list_devices1([{"n", N},
+		   {"previous", Prev}]);
+list_devices(Account, N) 
+  when is_list(Account), is_integer(N), N>=0 ->
     list_devices1([{"n", N},
 		   {"previous", ""},
                    {"account", Account}]).
-list_devices(N) when is_integer(N), N>=0 ->
+list_devices(N) 
+  when is_integer(N), N>=0 ->
     list_devices1([{"n", N},
 		   {"previous", ""}]).
 list_devices1(Params) ->
@@ -585,12 +673,27 @@ list_devices1(Params) ->
 		 integer_to_list(random()),
 		 user).
 
-list_device_group_members(Account, Group, N) when is_integer(N), N>=0 ->
+%% Change gaurds when using name istead of id!!!
+list_device_group_members(Account, Group, N, Prev) 
+  when is_list(Account), is_integer(Group), is_integer(N), N>=0, 
+       is_list(Prev) ->
+    list_device_group_members1([{"gid", Group},
+				{"n", N},
+				{"previous", Prev},
+                                {"account", Account}]).
+list_device_group_members(Group, N, Prev) 
+  when is_integer(Group), is_integer(N), N>=0, is_list(Prev)->
+    list_device_group_members1([{"gid", Group},
+				{"n", N},
+				{"previous", Prev}]);
+list_device_group_members(Account, Group, N) 
+  when is_list(Account), is_integer(Group), is_integer(N), N>=0 ->
     list_device_group_members1([{"gid", Group},
 				{"n", N},
 				{"previous", ""},
                                 {"account", Account}]).
-list_device_group_members(Group, N) when is_integer(N), N>=0 ->
+list_device_group_members(Group, N) 
+  when is_integer(Group), is_integer(N), N>=0 ->
     list_device_group_members1([{"gid", Group},
 				{"n", N},
 				{"previous", ""}]).
@@ -600,12 +703,25 @@ list_device_group_members1(Params) ->
 		 integer_to_list(random()),
 		 user).
 
-list_device_type_members(Account, Name, N) when is_integer(N), N>=0 ->
+list_device_type_members(Account, Name, N, Prev) 
+  when is_list(Account), is_list(Name), is_integer(N), N>=0, is_list(Prev) ->
+    list_device_type_members1([{"name", Name},
+			       {"n", N},
+			       {"previous", Prev},
+                               {"account", Account}]).
+list_device_type_members(Name, N, Prev) 
+  when is_list(Name), is_integer(N), N>=0, is_list(Prev) ->
+    list_device_type_members1([{"name", Name},
+			       {"n", N},
+			       {"previous", ""}]);
+list_device_type_members(Account, Name, N) 
+  when is_list(Account), is_list(Name), is_integer(N), N>=0 ->
     list_device_type_members1([{"name", Name},
 			       {"n", N},
 			       {"previous", ""},
                                {"account", Account}]).
-list_device_type_members(Name, N) when is_integer(N), N>=0 ->
+list_device_type_members(Name, N) 
+  when is_list(Name), is_integer(N), N>=0 ->
     list_device_type_members1([{"name", Name},
 			       {"n", N},
 			       {"previous", ""}]).
@@ -615,12 +731,25 @@ list_device_type_members1(Params) ->
 		 integer_to_list(random()),
 		 user).
 
-list_config_set_members(Account, Name, N) when is_integer(N), N>=0 ->
+list_config_set_members(Account, Name, N, Prev) 
+  when is_list(Account), is_list(Name), is_integer(N), N>=0, is_list(Prev) ->
+    list_config_set_members1([{"name", Name},
+			      {"n", N},
+			      {"previous", Prev},
+                              {"account", Account}]).
+list_config_set_members(Name, N, Prev) 
+  when is_list(Name), is_integer(N), N>=0, is_list(Prev) ->
+    list_config_set_members1([{"name", Name},
+			      {"n", N},
+			      {"previous", Prev}]);
+list_config_set_members(Account, Name, N) 
+  when is_list(Account), is_list(Name), is_integer(N), N>=0 ->
     list_config_set_members1([{"name", Name},
 			      {"n", N},
 			      {"previous", ""},
                               {"account", Account}]).
-list_config_set_members(Name, N) when is_integer(N), N>=0 ->
+list_config_set_members(Name, N) 
+  when is_list(Name), is_integer(N), N>=0 ->
     list_config_set_members1([{"name", Name},
 			      {"n", N},
 			      {"previous", ""}]).
@@ -672,23 +801,37 @@ http_post(Request, UserType) ->
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 parse_result(ResultStruct, "ok") ->
+    %% Standard
+    ?debug("ok: result ~p",[ResultStruct]),
     {"result", {struct,[{"result", "ok"}]}} = ResultStruct,
     ok;
 parse_result(ResultStruct, {item, Item}) ->
+    ?debug("{item , ~p}: result ~p",[Item, ResultStruct]),
     {"result",{struct,[{"result","ok"},{Item,Value}]}} = ResultStruct,
     Value;
 parse_result(ResultStruct, {list, Items}) ->
     %% List result
+    ?debug("{list, ~p}: result ~p",[Items, ResultStruct]),
     {"result", {struct,[{Items,{array, List}}]}} = ResultStruct,
     List;
+parse_result(ResultStruct, {item_list, Items}) ->
+    %% Lookup functions, returns zero or one item ??
+    ?debug("{item_list , ~p}: result ~p",[Items, ResultStruct]),
+    {"result",{struct,[{"result","ok"},{Items,{array, [Item]}}]}} = 
+        ResultStruct,
+    Item;
 parse_result(ResultStruct, {error, Reason}) ->
+    %% Expected error
+    ?debug("{error, ~p}: result ~p",[Reason, ResultStruct]),
     {"result",{struct,[{"result", Reason}]}} = ResultStruct,
     ok;
 parse_result(_ResultStruct, any) ->
     %% Don't check result
+    ?debug("any: result ~p",[_ResultStruct]),
     ok;
 parse_result(ResultStruct, _Other) ->
     %% Return everything
+    ?debug("~p: result ~p",[_Other,ResultStruct]),
     ResultStruct.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -756,3 +899,6 @@ random() ->
     random:uniform(16#1000000).
 
 
+client("user") -> user;
+client("system") -> admin. 
+  
