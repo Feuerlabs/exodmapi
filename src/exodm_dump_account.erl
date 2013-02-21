@@ -94,7 +94,7 @@ run1(Mod, _Account=#account {aname = AName}) ->
     
     %% Write yang sources to file
     YangSrcs = 
-        lookup(Mod, lookup_yang_module, {item_list, "yang-modules"}, 
+        lookup(Mod, lookup_yang_module, {lookup, "yang-modules"}, 
                [AName, "user"], Yangs, []),
     store_yang_srcs(AName, YangSrcs).
     

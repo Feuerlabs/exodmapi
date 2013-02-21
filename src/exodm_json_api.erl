@@ -814,7 +814,7 @@ parse_result(ResultStruct, {list, Items}) ->
     ?debug("{list, ~p}: result ~p",[Items, ResultStruct]),
     {"result", {struct,[{Items,{array, List}}]}} = ResultStruct,
     List;
-parse_result(ResultStruct, {item_list, Items}) ->
+parse_result(ResultStruct, {lookup, Items}) ->
     %% Lookup functions, returns zero or one item ??
     ?debug("{item_list , ~p}: result ~p",[Items, ResultStruct]),
     {"result",{struct,[{"result","ok"},{Items,{array, [Item]}}]}} = 
