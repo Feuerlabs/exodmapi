@@ -30,7 +30,8 @@ else
     AUTH=$USER_AUTH
 fi
 
-sed 's/"/\\"/g' < $YANG_FILE > /tmp/create_yang_module.tmp
+sed 's/\\/\\\\/g' < $YANG_FILE | sed  's/"/\\"/g'  > /tmp/create_yang_module.tmp
+# curl -u $AUTH -k -X POST http://localhost:1234 --data-binary @- << EOF
 curl -u $AUTH -k -X POST $URL --data-binary @- << EOF
 {
     "jsonrpc": "2.0",
