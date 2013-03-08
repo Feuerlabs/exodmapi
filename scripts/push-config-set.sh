@@ -2,9 +2,9 @@
 
 . $HOME/.exodmrc
 
-if [ $# != 2 ]
+if [ $# != 1 ]
 then
-    echo "Usage: $0 config-set-name new-notification-url"
+    echo "Usage: $0 config-set-name"
     exit 255
 fi
 
