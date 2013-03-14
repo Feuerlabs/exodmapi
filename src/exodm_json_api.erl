@@ -515,24 +515,24 @@ create_device_group1(Params) ->
 		 user).
 
 %% Change gaurds when using name istead of id!!!
-list_device_groups(Account, N, Prev) 
-  when is_list(Account), is_integer(N), N>=0, is_integer(Prev) ->
+list_device_groups(Account, N, Prev)
+  when is_list(Account), is_integer(N), N>=0, is_list(Prev) ->
     list_device_groups1([{"n", N},
 			 {"previous", Prev},
                          {"account", Account}]).
-list_device_groups(N, Prev) 
-  when is_integer(N), N>=0, is_integer(Prev) ->
+list_device_groups(N, Prev)
+  when is_integer(N), N>=0, is_list(Prev) ->
     list_device_groups1([{"n", N},
 			 {"previous", Prev}]);
-list_device_groups(Account, N) 
+list_device_groups(Account, N)
   when is_list(Account), is_integer(N), N>=0 ->
     list_device_groups1([{"n", N},
-			 {"previous", 0},
+			 {"previous", ""},
                          {"account", Account}]).
-list_device_groups(N) 
+list_device_groups(N)
   when is_integer(N), N>=0 ->
     list_device_groups1([{"n", N},
-			 {"previous", 0}]).
+			 {"previous", ""}]).
 list_device_groups1(Params) ->
     json_request("exodm:list-device-groups",
 		 Params,
@@ -540,26 +540,26 @@ list_device_groups1(Params) ->
 		 user).
 
 %% Change gaurds when using name istead of id!!!
-delete_device_group(Account, GroupName) 
-  when is_list(Account), is_integer(GroupName) ->
+delete_device_group(Account, GroupName)
+  when is_list(Account), is_list(GroupName) ->
     delete_device_group1([{"gid", GroupName},
                           {"account", Account}]).
-delete_device_group(GroupName)  
-  when is_integer(GroupName) ->
+delete_device_group(GroupName)
+  when is_list(GroupName) ->
     delete_device_group1([{"gid", GroupName}]).
 delete_device_group1(Params) ->
     json_request("exodm:delete-device-group",
 		 %% [{"name", GroupName}], %% When delivered
-		 Params, 
+		 Params,
 		 integer_to_list(random()),
 		 user).
 
-add_device_group_members(Account, Groups, IDs) 
+add_device_group_members(Account, Groups, IDs)
   when is_list(Account), is_list(Groups), is_list(IDs) ->
     add_device_group_members1([{"device-groups", {array,Groups}},
 			       {"dev-id", {array,IDs}},
                                {"account", Account}]).
-add_device_group_members(Groups,IDs)  
+add_device_group_members(Groups,IDs)
   when is_list(Groups), is_list(IDs) ->
     add_device_group_members1([{"device-groups", {array,Groups}},
 			       {"dev-id", {array,IDs}}]).
@@ -569,7 +569,7 @@ add_device_group_members1(Params) ->
 		 integer_to_list(random()),
 		 user).
 
-remove_device_group_members(Account, Groups, IDs) 
+remove_device_group_members(Account, Groups, IDs)
   when is_list(Account), is_list(Groups), is_list(IDs) ->
     remove_device_group_members1([{"device-groups", {array,Groups}}, 
 				  {"dev-id", {array,IDs}},
@@ -592,25 +592,25 @@ remove_device_group_members1(Params) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 create_device(Account, Id, Type, ServerKey, DeviceKey, Group) 
-  when is_list(Account), is_list(Id), is_list(Type), is_integer(Group) ->
+  when is_list(Account), is_list(Id), is_list(Type), is_list(Group) ->
     provision_device(Account, Id, Type, ServerKey, DeviceKey),
     add_config_set_members(Account, [Type], [Id]),
     add_device_group_members(Account, [Group],[Id]).
 
 create_device(Id, Type, ServerKey, DeviceKey, Group)  
-  when is_list(Id), is_list(Type), is_integer(Group) ->
+  when is_list(Id), is_list(Type), is_list(Group) ->
     provision_device(Id, Type, ServerKey, DeviceKey),
     add_config_set_members([Type], [Id]),
     add_device_group_members([Group],[Id]).
 
 delete_device(Account, Id, Type, Group) 
-  when is_list(Account), is_list(Id), is_list(Type), is_integer(Group) ->
+  when is_list(Account), is_list(Id), is_list(Type), is_list(Group) ->
     remove_device_group_members(Account, [Group],[Id]),
     remove_config_set_members(Account, [Type],[Id]),
     deprovision_devices(Account, [Id]).
 
 delete_device(Id, Type, Group) 
-  when is_list(Id), is_list(Type), is_integer(Group) ->
+  when is_list(Id), is_list(Type), is_list(Group) ->
     remove_device_group_members([Group],[Id]),
     remove_config_set_members([Type],[Id]),
     deprovision_devices([Id]).
@@ -675,19 +675,19 @@ list_devices1(Params) ->
 
 %% Change gaurds when using name istead of id!!!
 list_device_group_members(Account, Group, N, Prev) 
-  when is_list(Account), is_integer(Group), is_integer(N), N>=0, 
+  when is_list(Account), is_list(Group), is_integer(N), N>=0, 
        is_list(Prev) ->
     list_device_group_members1([{"gid", Group},
 				{"n", N},
 				{"previous", Prev},
                                 {"account", Account}]).
 list_device_group_members(Group, N, Prev) 
-  when is_integer(Group), is_integer(N), N>=0, is_list(Prev)->
+  when is_list(Group), is_integer(N), N>=0, is_list(Prev)->
     list_device_group_members1([{"gid", Group},
 				{"n", N},
 				{"previous", Prev}]);
 list_device_group_members(Account, Group, N) 
-  when is_list(Account), is_integer(Group), is_integer(N), N>=0 ->
+  when is_list(Account), is_list(Group), is_integer(N), N>=0 ->
     list_device_group_members1([{"gid", Group},
 				{"n", N},
 				{"previous", ""},
