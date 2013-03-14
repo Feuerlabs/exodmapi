@@ -34,7 +34,7 @@ curl -u $USER_AUTH -k -X POST $URL -d @- << EOF
     "params":
     {
         "name": [ "$CFG_SET" ],
-        "dev-id": [ $VAL ]
+        "device-id": [ $VAL ]
     }
 }
 EOF

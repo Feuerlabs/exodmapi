@@ -4,11 +4,11 @@
 
 if [ $# -lt 2 ]
 then
-    echo "Usage: $0 device-group devid1 devid2 ..."
+    echo "Usage: $0 device-group device-id1 device-id2 ..."
     exit 255
 fi
 
-GID=$1
+GROUPID=$1
 shift
 FIRST_ENTRY=true
 while [ "$#" -gt "0" ]
@@ -23,7 +23,7 @@ do
     shift
 done
 
-echo "GID = $GID"
+echo "GROUPID = $GROUPID"
 echo "VAL = $VAL"
 
 curl -u $USER_AUTH -k -X POST  $URL -d @- << EOF
@@ -33,8 +33,8 @@ curl -u $USER_AUTH -k -X POST  $URL -d @- << EOF
     "id": "1",
     "params":
     {
-        "device-groups": [ "$GID" ],
-        "dev-id": [ $VAL ]
+        "group-id": [ "$GROUPID" ],
+        "device-id": [ $VAL ]
     }
 }
 EOF

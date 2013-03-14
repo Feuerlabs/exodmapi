@@ -11,11 +11,11 @@ fi
 curl -u $USER_AUTH -k -X POST $URL -d @- << EOF
 {
     "jsonrpc": "2.0",
-    "method": "exodm:provision-device",
+    "method": "exodm:create-device",
     "id": "1",
     "params":
     {
-        "dev-id": "$1",
+        "device-id": "$1",
         "device-type": "$2",
         "server-key": $4,
         "device-key": $5,
@@ -32,7 +32,7 @@ curl -u $USER_AUTH -k -X POST $URL -d @-  <<EOF
     "params":
     {
         "name": [ "$3" ],
-        "dev-id": [ "$1" ]
+        "device-id": [ "$1" ]
     }
 }
 EOF
