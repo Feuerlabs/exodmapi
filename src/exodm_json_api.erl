@@ -73,14 +73,14 @@
 	 remove_device_group_members/2
 	]).
 -export([
-	 create_device/6,
+	 %% create_device/6,
+	 %% create_device/5,
+	 %% delete_device/4,
+	 %% delete_device/3,
 	 create_device/5,
-	 delete_device/4,
-	 delete_device/3,
-	 provision_device/5,
-	 provision_device/4,
-	 deprovision_devices/2,
-	 deprovision_devices/1,
+	 create_device/4,
+	 delete_devices/2,
+	 delete_devices/1,
 	 list_devices/3,
 	 list_devices/2,
 	 list_devices/1,
@@ -591,60 +591,60 @@ remove_device_group_members1(Params) ->
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-create_device(Account, Id, Type, ServerKey, DeviceKey, Group) 
-  when is_list(Account), is_list(Id), is_list(Type), is_list(Group) ->
-    provision_device(Account, Id, Type, ServerKey, DeviceKey),
-    add_config_set_members(Account, [Type], [Id]),
-    add_device_group_members(Account, [Group],[Id]).
+%% create_device(Account, Id, Type, ServerKey, DeviceKey, Group) 
+%%   when is_list(Account), is_list(Id), is_list(Type), is_list(Group) ->
+%%     create_device(Account, Id, Type, ServerKey, DeviceKey),
+%%     add_config_set_members(Account, [Type], [Id]),
+%%     add_device_group_members(Account, [Group],[Id]).
 
-create_device(Id, Type, ServerKey, DeviceKey, Group)  
-  when is_list(Id), is_list(Type), is_list(Group) ->
-    provision_device(Id, Type, ServerKey, DeviceKey),
-    add_config_set_members([Type], [Id]),
-    add_device_group_members([Group],[Id]).
+%% create_device(Id, Type, ServerKey, DeviceKey, Group)  
+%%   when is_list(Id), is_list(Type), is_list(Group) ->
+%%     create_device(Id, Type, ServerKey, DeviceKey),
+%%     add_config_set_members([Type], [Id]),
+%%     add_device_group_members([Group],[Id]).
 
-delete_device(Account, Id, Type, Group) 
-  when is_list(Account), is_list(Id), is_list(Type), is_list(Group) ->
-    remove_device_group_members(Account, [Group],[Id]),
-    remove_config_set_members(Account, [Type],[Id]),
-    deprovision_devices(Account, [Id]).
+%% delete_device(Account, Id, Type, Group) 
+%%   when is_list(Account), is_list(Id), is_list(Type), is_list(Group) ->
+%%     remove_device_group_members(Account, [Group],[Id]),
+%%     remove_config_set_members(Account, [Type],[Id]),
+%%     delete_devices(Account, [Id]).
 
-delete_device(Id, Type, Group) 
-  when is_list(Id), is_list(Type), is_list(Group) ->
-    remove_device_group_members([Group],[Id]),
-    remove_config_set_members([Type],[Id]),
-    deprovision_devices([Id]).
+%% delete_device(Id, Type, Group) 
+%%   when is_list(Id), is_list(Type), is_list(Group) ->
+%%     remove_device_group_members([Group],[Id]),
+%%     remove_config_set_members([Type],[Id]),
+%%     delete_devices([Id]).
 
-provision_device(Account, Id, Type, ServerKey, DeviceKey) 
+create_device(Account, Id, Type, ServerKey, DeviceKey) 
   when is_list(Account), is_list(Id), is_list(Type) ->
-    provision_device1([{"device-id", Id},
-		       {"device-type", Type},
-		       {"server-key", ServerKey},
-		       {"device-key", DeviceKey},
-		       {"msisdn", "+467331231234"},
-                       {"account", Account}]).
-provision_device(Id, Type, ServerKey, DeviceKey) 
+    create_device1([{"device-id", Id},
+		    {"device-type", Type},
+		    {"server-key", ServerKey},
+		    {"device-key", DeviceKey},
+		    {"msisdn", "+467331231234"},
+		    {"account", Account}]).
+create_device(Id, Type, ServerKey, DeviceKey) 
   when is_list(Id), is_list(Type)->
-    provision_device1([{"device-id", Id},
-		       {"device-type", Type},
-		       {"server-key", ServerKey},
-		       {"device-key", DeviceKey},
-		       {"msisdn", "+467331231234"}]).
-provision_device1(Params) ->
-    json_request("exodm:provision-device",
+    create_device1([{"device-id", Id},
+		    {"device-type", Type},
+		    {"server-key", ServerKey},
+		    {"device-key", DeviceKey},
+		    {"msisdn", "+467331231234"}]).
+create_device1(Params) ->
+    json_request("exodm:create-device",
 		 Params,
 		 integer_to_list(random()),
 		 user).
 
-deprovision_devices(Account, IDs) 
+delete_devices(Account, IDs) 
   when is_list(Account), is_list(IDs) ->
-    deprovision_devices1([{"device-id", {array, IDs}},
-                          {"account", Account}]).
-deprovision_devices(IDs) 
+    delete_devices1([{"device-id", {array, IDs}},
+		     {"account", Account}]).
+delete_devices(IDs) 
   when is_list(IDs) ->
-    deprovision_devices1([{"device-id", {array, IDs}}]).
-deprovision_devices1(Params) ->
-    json_request("exodm:deprovision-devices",
+    delete_devices1([{"device-id", {array, IDs}}]).
+delete_devices1(Params) ->
+    json_request("exodm:delete-devices",
 		 Params,
 		 integer_to_list(random()),
 		 user).    
