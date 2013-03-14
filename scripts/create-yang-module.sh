@@ -30,17 +30,23 @@ else
     AUTH=$USER_AUTH
 fi
 
-sed 's/"/\\"/g' < $YANG_FILE > /tmp/create_yang_module.tmp
-curl -u $AUTH -k -X POST $URL --data-binary @- << EOF
+#sed 's/\\/\\\\/g' < $YANG_FILE | sed  's/"/\\"/g'  > /tmp/create_yang_module.tmp
+# curl -u $AUTH -k -X POST http://localhost:1234 --data-binary @- << EOF
+
+BASE_YANG=$(basename $YANG_FILE)
+# Create a file containing the actual call
+cat > /tmp/yang.json << EOF
 {
     "jsonrpc": "2.0",
     "method": "exodm:create-yang-module",
     "id": "1",
     "params":
     {
-        "name": "$YANG_FILE",
+        "name": "$BASE_YANG",
         "repository": "$REPO",
-        "yang-module": "$(cat /tmp/create_yang_module.tmp)"
+        "yang-module": "file:$BASE_YANG"
     }
 }
 EOF
+
+curl -u $AUTH -k $URL -F file="@${YANG_FILE};filename=$BASE_YANG" -F jsonrpc=@/tmp/yang.json

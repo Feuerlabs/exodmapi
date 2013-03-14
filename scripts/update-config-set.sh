@@ -35,10 +35,7 @@ curl -u $USER_AUTH -k -X POST $URL -d @- << EOF
     {
         "name": "$CFG_SET",
         "notification-url": "$NOTIFICATION_URL",
-        "values":
-        [
-            $VAL
-        ]
+        "values": $VAL
     }
 }
 EOF
