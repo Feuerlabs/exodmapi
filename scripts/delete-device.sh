@@ -4,7 +4,7 @@
 
 if [ $# -lt 1 ]
 then
-    echo "Usage: $0 dev-id1 [dev-id2 [...]]"
+    echo "Usage: $0 device-id [device-id2 [...]]"
     exit 255
 fi
 
@@ -26,11 +26,11 @@ echo "VAL = $VAL"
 curl -u $USER_AUTH -k -X POST $URL -d @- << EOF
 {
     "jsonrpc": "2.0",
-    "method": "exodm:deprovision-devices",
+    "method": "exodm:delete-devices",
     "id": "1",
     "params":
     {
-        "dev-id": [ $VAL ]
+        "device-id": [ $VAL ]
     }
 }
 EOF
