@@ -407,12 +407,12 @@ delete_config_set1(Params) ->
 add_config_set_members(Account, Types, IDs) 
   when is_list(Account), is_list(Types), is_list(IDs) ->
     add_config_set_members1([{"name", {array,Types}}, 
-			     {"dev-id", {array,IDs}},
+			     {"device-id", {array,IDs}},
                              {"account", Account}]).
 add_config_set_members(Types, IDs)  
   when is_list(Types), is_list(IDs) ->
     add_config_set_members1([{"name", {array,Types}}, 
-			     {"dev-id", {array,IDs}}]).
+			     {"device-id", {array,IDs}}]).
 add_config_set_members1(Params) ->
     json_request("exodm:add-config-set-members",
 		 Params,
@@ -422,12 +422,12 @@ add_config_set_members1(Params) ->
 remove_config_set_members(Account, Types, IDs) 
   when is_list(Account), is_list(Types), is_list(IDs) ->
     remove_config_set_members1([{"name", {array,Types}}, 
-				{"dev-id", {array,IDs}},
+				{"device-id", {array,IDs}},
                                 {"account", Account}]).
 remove_config_set_members(Types, IDs)   
   when is_list(Types), is_list(IDs) ->
     remove_config_set_members1([{"name", {array,Types}}, 
-				{"dev-id", {array,IDs}}]).
+				{"device-id", {array,IDs}}]).
 remove_config_set_members1(Params) ->
     json_request("exodm:remove-config-set-members",
 		 Params,
@@ -542,11 +542,11 @@ list_device_groups1(Params) ->
 %% Change gaurds when using name istead of id!!!
 delete_device_group(Account, GroupName)
   when is_list(Account), is_list(GroupName) ->
-    delete_device_group1([{"gid", GroupName},
+    delete_device_group1([{"group-id", GroupName},
                           {"account", Account}]).
 delete_device_group(GroupName)
   when is_list(GroupName) ->
-    delete_device_group1([{"gid", GroupName}]).
+    delete_device_group1([{"group-id", GroupName}]).
 delete_device_group1(Params) ->
     json_request("exodm:delete-device-group",
 		 %% [{"name", GroupName}], %% When delivered
@@ -556,13 +556,13 @@ delete_device_group1(Params) ->
 
 add_device_group_members(Account, Groups, IDs)
   when is_list(Account), is_list(Groups), is_list(IDs) ->
-    add_device_group_members1([{"device-groups", {array,Groups}},
-			       {"dev-id", {array,IDs}},
+    add_device_group_members1([{"group-id", {array,Groups}},
+			       {"device-id", {array,IDs}},
                                {"account", Account}]).
 add_device_group_members(Groups,IDs)
   when is_list(Groups), is_list(IDs) ->
-    add_device_group_members1([{"device-groups", {array,Groups}},
-			       {"dev-id", {array,IDs}}]).
+    add_device_group_members1([{"group-id", {array,Groups}},
+			       {"device-id", {array,IDs}}]).
 add_device_group_members1(Params) ->
     json_request("exodm:add-device-group-members",
 		 Params,
@@ -571,13 +571,13 @@ add_device_group_members1(Params) ->
 
 remove_device_group_members(Account, Groups, IDs)
   when is_list(Account), is_list(Groups), is_list(IDs) ->
-    remove_device_group_members1([{"device-groups", {array,Groups}}, 
-				  {"dev-id", {array,IDs}},
+    remove_device_group_members1([{"group-id", {array,Groups}}, 
+				  {"device-id", {array,IDs}},
                                   {"account", Account}]).
 remove_device_group_members(Groups, IDs)   
   when is_list(Groups), is_list(IDs) ->
-    remove_device_group_members1([{"device-groups", {array,Groups}}, 
-				  {"dev-id", {array,IDs}}]).
+    remove_device_group_members1([{"group-id", {array,Groups}}, 
+				  {"device-id", {array,IDs}}]).
 remove_device_group_members1(Params) ->
     json_request("exodm:remove-device-group-members",
 		 Params,
@@ -617,7 +617,7 @@ delete_device(Id, Type, Group)
 
 provision_device(Account, Id, Type, ServerKey, DeviceKey) 
   when is_list(Account), is_list(Id), is_list(Type) ->
-    provision_device1([{"dev-id", Id},
+    provision_device1([{"device-id", Id},
 		       {"device-type", Type},
 		       {"server-key", ServerKey},
 		       {"device-key", DeviceKey},
@@ -625,7 +625,7 @@ provision_device(Account, Id, Type, ServerKey, DeviceKey)
                        {"account", Account}]).
 provision_device(Id, Type, ServerKey, DeviceKey) 
   when is_list(Id), is_list(Type)->
-    provision_device1([{"dev-id", Id},
+    provision_device1([{"device-id", Id},
 		       {"device-type", Type},
 		       {"server-key", ServerKey},
 		       {"device-key", DeviceKey},
@@ -638,11 +638,11 @@ provision_device1(Params) ->
 
 deprovision_devices(Account, IDs) 
   when is_list(Account), is_list(IDs) ->
-    deprovision_devices1([{"dev-id", {array, IDs}},
+    deprovision_devices1([{"device-id", {array, IDs}},
                           {"account", Account}]).
 deprovision_devices(IDs) 
   when is_list(IDs) ->
-    deprovision_devices1([{"dev-id", {array, IDs}}]).
+    deprovision_devices1([{"device-id", {array, IDs}}]).
 deprovision_devices1(Params) ->
     json_request("exodm:deprovision-devices",
 		 Params,
@@ -677,24 +677,24 @@ list_devices1(Params) ->
 list_device_group_members(Account, Group, N, Prev) 
   when is_list(Account), is_list(Group), is_integer(N), N>=0, 
        is_list(Prev) ->
-    list_device_group_members1([{"gid", Group},
+    list_device_group_members1([{"group-id", Group},
 				{"n", N},
 				{"previous", Prev},
                                 {"account", Account}]).
 list_device_group_members(Group, N, Prev) 
   when is_list(Group), is_integer(N), N>=0, is_list(Prev)->
-    list_device_group_members1([{"gid", Group},
+    list_device_group_members1([{"group-id", Group},
 				{"n", N},
 				{"previous", Prev}]);
 list_device_group_members(Account, Group, N) 
   when is_list(Account), is_list(Group), is_integer(N), N>=0 ->
-    list_device_group_members1([{"gid", Group},
+    list_device_group_members1([{"group-id", Group},
 				{"n", N},
 				{"previous", ""},
                                 {"account", Account}]).
 list_device_group_members(Group, N) 
   when is_integer(Group), is_integer(N), N>=0 ->
-    list_device_group_members1([{"gid", Group},
+    list_device_group_members1([{"group-id", Group},
 				{"n", N},
 				{"previous", ""}]).
 list_device_group_members1(Params) ->
