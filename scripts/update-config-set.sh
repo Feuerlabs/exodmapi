@@ -13,6 +13,7 @@ NOTIFICATION_URL=$2
 shift
 shift
 FIRST_ENTRY=true
+VAL="{ }"
 while [ "$#" -gt "0" ]
 do
     if [ "$FIRST_ENTRY" = "true" ]
