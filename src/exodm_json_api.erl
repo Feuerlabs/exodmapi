@@ -94,6 +94,7 @@
 	 list_config_set_members/3,
 	 list_config_set_members/2
 	]).
+-export([json_request/4]). %% Generic
 -export([parse_result/2]).
 -export([set_exodmrc_dir/1,
 	 read_exodmrc/0,
