@@ -73,10 +73,7 @@
 	 remove_device_group_members/2
 	]).
 -export([
-	 %% create_device/6,
-	 %% create_device/5,
-	 %% delete_device/4,
-	 %% delete_device/3,
+	 create_device/6,
 	 create_device/5,
 	 create_device/4,
 	 delete_devices/2,
@@ -592,30 +589,14 @@ remove_device_group_members1(Params) ->
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-%% create_device(Account, Id, Type, ServerKey, DeviceKey, Group) 
-%%   when is_list(Account), is_list(Id), is_list(Type), is_list(Group) ->
-%%     create_device(Account, Id, Type, ServerKey, DeviceKey),
-%%     add_config_set_members(Account, [Type], [Id]),
-%%     add_device_group_members(Account, [Group],[Id]).
-
-%% create_device(Id, Type, ServerKey, DeviceKey, Group)  
-%%   when is_list(Id), is_list(Type), is_list(Group) ->
-%%     create_device(Id, Type, ServerKey, DeviceKey),
-%%     add_config_set_members([Type], [Id]),
-%%     add_device_group_members([Group],[Id]).
-
-%% delete_device(Account, Id, Type, Group) 
-%%   when is_list(Account), is_list(Id), is_list(Type), is_list(Group) ->
-%%     remove_device_group_members(Account, [Group],[Id]),
-%%     remove_config_set_members(Account, [Type],[Id]),
-%%     delete_devices(Account, [Id]).
-
-%% delete_device(Id, Type, Group) 
-%%   when is_list(Id), is_list(Type), is_list(Group) ->
-%%     remove_device_group_members([Group],[Id]),
-%%     remove_config_set_members([Type],[Id]),
-%%     delete_devices([Id]).
-
+create_device(Account, Id, Type, ServerKey, DeviceKey, MsIsdn) 
+  when is_list(Account), is_list(Id), is_list(Type) ->
+    create_device1([{"device-id", Id},
+		    {"device-type", Type},
+		    {"server-key", ServerKey},
+		    {"device-key", DeviceKey},
+		    {"msisdn", MsIsdn},
+		    {"account", Account}]).
 create_device(Account, Id, Type, ServerKey, DeviceKey) 
   when is_list(Account), is_list(Id), is_list(Type) ->
     create_device1([{"device-id", Id},
