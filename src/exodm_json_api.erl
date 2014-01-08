@@ -1393,7 +1393,9 @@ json_request(Request, KeyValueList, TransId, Options) ->
 	    {"id",TransId} = lists:keyfind("id",1,Values),
 	    lists:keyfind("result",1, Values);
 	{ok, {http_response, _Version, 401, Reason, _Header}, _Data} ->
-	    {error, Reason}
+	    {error, Reason};
+	{error, _Error} = E ->
+	    E
     end.
 
 json_encode(Request, KeyValueList, TransId) ->
@@ -1418,6 +1420,9 @@ http_post(Request, Options) ->
 %% Parse json result
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+parse_result({error, econnrefused} = E, _Expected) ->
+    %% Host down ??
+    E;
 parse_result(ResultStruct, "ok") ->
     %% Standard
     ?debug("ok: result ~p",[ResultStruct]),
@@ -1444,15 +1449,10 @@ parse_result(ResultStruct, {error, Reason}) ->
     ?debug("{error, ~p}: result ~p",[Reason, ResultStruct]),
     {"result",{struct,[{"result", Reason}]}} = ResultStruct,
     ok;
-parse_result(ResultStruct, ok_or_error) ->
-    %% Standard
+parse_result(ResultStruct, resultcode) ->
     ?debug("code: result ~p",[ResultStruct]),
-    {"result", {struct,[{"result", Result}]}} = ResultStruct,
+    {"result", {struct,[{"result", Result}| _Tail]}} = ResultStruct,
     Result;
-parse_result({error, _Reason} = E, ok_or_error) ->
-    %% Http error
-    ?debug("error: result ~p",[E]),
-    E;
 parse_result(_ResultStruct, any) ->
     %% Don't check result
     ?debug("any: result ~p",[_ResultStruct]),
