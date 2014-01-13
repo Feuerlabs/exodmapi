@@ -13,6 +13,7 @@ NOTIFICATION_URL=$2
 shift
 shift
 FIRST_ENTRY=true
+VAL="{ }"
 while [ "$#" -gt "0" ]
 do
     if [ "$FIRST_ENTRY" = "true" ]
@@ -35,10 +36,7 @@ curl -u $USER_AUTH -k -X POST $URL -d @- << EOF
     {
         "name": "$CFG_SET",
         "notification-url": "$NOTIFICATION_URL",
-        "values":
-        [
-            $VAL
-        ]
+        "values": $VAL
     }
 }
 EOF

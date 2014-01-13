@@ -4,7 +4,7 @@
 
 if [ $# != 2 ]
 then
-    echo "Usage: $0 gid notification-url"
+    echo "Usage: $0 group-id notification-url"
     exit 255
 fi
 
@@ -15,7 +15,7 @@ curl -u $USER_AUTH -k -X POST $URL -d @- << EOF
     "id": "1",
     "params":
     {
-        "": $1,
+        "group-id": $1,
         "protocol": "$2"
     }
 }

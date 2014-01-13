@@ -14,7 +14,7 @@ curl -u $USER_AUTH -k -X POST $URL -d @- <<EOF
     "method": "exodm:lookup-device",
     "id": "1",
     "params": {
-	"dev-id": "$1"
+	"device-id": "$1"
     }
 }
 EOF

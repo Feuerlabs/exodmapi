@@ -15,7 +15,7 @@ curl -u $USER_AUTH -k -X POST $URL -d @- << EOF
     "id": "1",
     "params":
     {
-        "gid": $1
+        "group-id": $1
     }
 }
 EOF

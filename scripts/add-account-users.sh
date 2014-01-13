@@ -4,11 +4,13 @@
 
 if [ $# -lt 2 ]
 then
-    echo "Usage: $0 config-set devid1 devid2 ..."
+    echo "Usage: $0 account role user1 user2 ..."
     exit 255
 fi
 
-CFG_SET=$1
+ACCT=$1
+shift
+ROLE=$1
 shift
 FIRST_ENTRY=true
 while [ "$#" -gt "0" ]
@@ -23,18 +25,17 @@ do
     shift
 done
 
-echo "CFG_SET = $CFG_SET"
-echo "VAL = $VAL"
 
-curl -u $USER_AUTH -k -X POST $URL -d @- << EOF
+curl -u $ADMIN_AUTH -k -X POST  $URL -d @- << EOF
 {
     "jsonrpc": "2.0",
-    "method": "exodm:add-config-set-members",
+    "method": "exodm:add-account-users",
     "id": "1",
     "params":
     {
-        "name": [ "$CFG_SET" ],
-        "device-id": [ $VAL ]
+        "account":  "$ACCT" ,
+        "role":  "$ROLE",
+        "unames": [ $VAL ]
     }
 }
 EOF
