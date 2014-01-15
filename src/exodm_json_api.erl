@@ -96,6 +96,10 @@
 	 create_device/5,
 	 delete_devices/3,
 	 delete_devices/2,
+	 lookup_device/3,
+	 lookup_device/2,
+	 lookup_device_attributes/4,
+	 lookup_device_attributes/3,
 	 list_devices/4,
 	 list_devices/3,
 	 list_devices/2,
@@ -1139,6 +1143,64 @@ delete_devices1(Params, Options) ->
 		 Options).    
 
 %%--------------------------------------------------------------------
+-spec lookup_device(Account::string(),
+		    ID::string(), 
+		    Options::list(Option::option())) ->
+			   Struct::tuple().
+
+lookup_device(Account, ID, Options) 
+  when is_list(Account), is_list(ID), is_list(Options) ->
+    lookup_device1([{"device-id", ID},
+		    {"account", Account}],
+		   Options).
+
+-spec lookup_device(ID::string(), 
+		    Options::list(Option::option())) ->
+				 Struct::tuple().
+
+lookup_device(ID, Options) 
+  when is_list(ID), is_list(Options) ->
+    lookup_device1([{"device-id", ID}],
+		    Options).
+
+lookup_device1(Params, Options) ->
+    json_request("exodm:lookup-device",
+		 Params,
+		 integer_to_list(random()),
+		 Options).    
+
+%%--------------------------------------------------------------------
+-spec lookup_device_attributes(Account::string(),
+			       ID::string(), 
+			       Attributes::list(string()),
+			       Options::list(Option::option())) ->
+			   Struct::tuple().
+
+lookup_device_attributes(Account, ID, Attributes, Options) 
+  when is_list(Account), is_list(ID), is_list(Attributes), is_list(Options) ->
+    lookup_device_attributes1([{"device-id", ID},
+			       {"attributes", Attributes}, 
+			       {"account", Account}],
+			      Options).
+
+-spec lookup_device_attributes(ID::string(), 
+			       Attributes::list(string()), 
+			       Options::list(Option::option())) ->
+				      Struct::tuple().
+
+lookup_device_attributes(ID, Attributes, Options) 
+  when is_list(ID), is_list(Options) ->
+    lookup_device_attributes1([{"device-id", ID},
+			       {"attributes", Attributes}],
+			      Options).
+
+lookup_device_attributes1(Params, Options) ->
+    json_request("exodm:lookup-device-attributes",
+		 Params,
+		 integer_to_list(random()),
+		 Options).    
+
+%%--------------------------------------------------------------------
 -spec list_devices(Account::string(),
 		   N::integer(),
 		   Prev::string(),
@@ -1388,7 +1450,7 @@ json_request(Request, KeyValueList, TransId, Options) ->
 	    String = binary_to_list(Data),
 	    ct:pal("Json request ~p~n,result ~p",
 		   [lists:flatten(JsonRequest), String]),
-	    {ok, {struct, Values}} = json2:decode_string(String),
+	    {ok, {struct, Values}} = exo_json:decode_string(String),
 	    {"jsonrpc","2.0"} = lists:keyfind("jsonrpc",1,Values),
 	    {"id",TransId} = lists:keyfind("id",1,Values),
 	    lists:keyfind("result",1, Values);
@@ -1399,7 +1461,7 @@ json_request(Request, KeyValueList, TransId, Options) ->
     end.
 
 json_encode(Request, KeyValueList, TransId) ->
-    json2:encode({struct, [{"jsonrpc", "2.0"},
+    exo_json:encode({struct, [{"jsonrpc", "2.0"},
 			   {"method", Request},
 			   {"id", TransId},
 			   {"params",
