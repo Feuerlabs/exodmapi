@@ -1179,7 +1179,7 @@ lookup_device1(Params, Options) ->
 lookup_device_attributes(Account, ID, Attributes, Options) 
   when is_list(Account), is_list(ID), is_list(Attributes), is_list(Options) ->
     lookup_device_attributes1([{"device-id", ID},
-			       {"attributes", Attributes}, 
+			       {"attributes", {array, Attributes}}, 
 			       {"account", Account}],
 			      Options).
 
@@ -1191,7 +1191,7 @@ lookup_device_attributes(Account, ID, Attributes, Options)
 lookup_device_attributes(ID, Attributes, Options) 
   when is_list(ID), is_list(Options) ->
     lookup_device_attributes1([{"device-id", ID},
-			       {"attributes", Attributes}],
+			       {"attributes", {array, Attributes}}],
 			      Options).
 
 lookup_device_attributes1(Params, Options) ->
