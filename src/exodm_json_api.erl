@@ -1448,12 +1448,16 @@ json_request(Request, KeyValueList, TransId, Options) ->
     case http_post(JsonRequest, Options) of
 	{ok, {http_response, _Version, 200, _, _Header}, Data} ->
 	    String = binary_to_list(Data),
-	    ct:pal("Json request ~p~n,result ~p",
+	    ct:pal("Json request: ~p~n, result: ~p",
 		   [lists:flatten(JsonRequest), String]),
 	    {ok, {struct, Values}} = exo_json:decode_string(String),
 	    {"jsonrpc","2.0"} = lists:keyfind("jsonrpc",1,Values),
 	    {"id",TransId} = lists:keyfind("id",1,Values),
-	    lists:keyfind("result",1, Values);
+	    %% If yang-validation failed you get error, not result.
+	    case lists:keyfind("result",1, Values) of
+		Result when is_tuple(Result) -> Result;
+		false -> lists:keyfind("error",1, Values)
+	    end;
 	{ok, {http_response, _Version, 401, Reason, _Header}, _Data} ->
 	    {error, Reason};
 	{error, _Error} = E ->
@@ -1511,10 +1515,12 @@ parse_result(ResultStruct, {error, Reason}) ->
     ?debug("{error, ~p}: result ~p",[Reason, ResultStruct]),
     {"result",{struct,[{"result", Reason}]}} = ResultStruct,
     ok;
-parse_result(ResultStruct, resultcode) ->
-    ?debug("code: result ~p",[ResultStruct]),
-    {"result", {struct,[{"result", Result}| _Tail]}} = ResultStruct,
-    Result;
+parse_result(ResultStruct, result) ->
+    ?debug("code: result: ~p",[ResultStruct]),
+    case ResultStruct of
+	{"result", {struct,[{"result", Result}| _Tail]}} -> Result;
+	{"error",{struct, Error}} -> {error, Error}
+    end;
 parse_result(_ResultStruct, any) ->
     %% Don't check result
     ?debug("any: result ~p",[_ResultStruct]),
