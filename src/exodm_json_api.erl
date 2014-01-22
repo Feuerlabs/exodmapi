@@ -1518,7 +1518,8 @@ parse_result(ResultStruct, {error, Reason}) ->
 parse_result(ResultStruct, result) ->
     ?debug("code: result: ~p",[ResultStruct]),
     case ResultStruct of
-	{"result", {struct,[{"result", Result}| _Tail]}} -> Result;
+	{"result", {struct,[{"result", "ok"}| _Tail]}} -> "ok";
+	{"result", {struct,[{"result", Result}| _Tail]}} -> {error, Result};
 	{"error",{struct, Error}} -> {error, Error}
     end;
 parse_result(_ResultStruct, any) ->
