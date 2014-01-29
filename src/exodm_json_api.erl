@@ -49,7 +49,11 @@
          list_execution_permission/5,
          list_execution_permission/4]).
 -export([
+	 create_user/3,
 	 create_user/5,
+	 create_user/7,
+	 update_user/3,
+	 update_user/7,
 	 list_users/2,
 	 delete_user/2,
 	 lookup_user/2,
@@ -91,6 +95,7 @@
 	 remove_device_group_members/4,
 	 remove_device_group_members/3]).
 -export([
+	 create_device/4,
 	 create_device/7,
 	 create_device/6,
 	 create_device/5,
@@ -234,6 +239,18 @@ list_account_roles(Account, N, Options)
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 -spec create_user(Name::string(), 
+		  Attributes::list({Key::string(), Value::string()}),
+		  Options::list(Option::option())) ->
+			 Struct::tuple().
+
+create_user(Name, Attributes, Options) 
+  when is_list(Name), is_list(Attributes), is_list(Options) ->
+    json_request("exodm:create-user",
+		 [{"uname", Name}| Attributes],
+		 integer_to_list(random()),
+		 Options).
+
+-spec create_user(Name::string(), 
 		  Mail::string(), 
 		  Passw::string(), 
 		  FullName::string(), 
@@ -248,6 +265,64 @@ create_user(Name, Mail, Passw, FullName, Options)
 		  {"email", Mail},
 		  {"password", Passw},
 		  {"fullname", FullName}],
+		 integer_to_list(random()),
+		 Options).
+
+-spec create_user(Name::string(), 
+		  Mail::string(), 
+		  Passw::string(), 
+		  FullName::string(),
+		  Phone::string(),
+		  Skype::string(),
+		  Options::list(Option::option())) ->
+			 Struct::tuple().
+
+create_user(Name, Mail, Passw, FullName, Phone, Skype, Options) 
+  when is_list(Name), is_list(Mail), is_list(Passw), is_list(FullName), 
+       is_list(Options) ->
+    json_request("exodm:create-user",
+		 [{"uname", Name},
+		  {"email", Mail},
+		  {"password", Passw},
+		  {"fullname", FullName},
+		  {"phone", Phone},
+		  {"skype", Skype}],
+		 integer_to_list(random()),
+		 Options).
+
+%%--------------------------------------------------------------------
+-spec update_user(Name::string(), 
+		  Attributes::list(string()),
+		  Options::list(Option::option())) ->
+			 Struct::tuple().
+
+update_user(Name, Attributes, Options) 
+  when is_list(Name), is_list(Attributes), is_list(Options) ->
+    json_request("exodm:update-user",
+		 [{"uname", Name}| Attributes],
+		 integer_to_list(random()),
+		 Options).
+
+%%--------------------------------------------------------------------
+-spec update_user(Name::string(), 
+		  Mail::string(), 
+		  Passw::string(), 
+		  FullName::string(),
+		  Phone::string(),
+		  Skype::string(),
+		  Options::list(Option::option())) ->
+			 Struct::tuple().
+
+update_user(Name, Mail, Passw, FullName, Phone, Skype, Options) 
+  when is_list(Name), is_list(Mail), is_list(Passw), is_list(FullName), 
+       is_list(Options) ->
+    json_request("exodm:update-user",
+		 [{"uname", Name},
+		  {"email", Mail},
+		  {"password", Passw},
+		  {"fullname", FullName},
+		  {"phone", Phone},
+		  {"skype", Skype}],
 		 integer_to_list(random()),
 		 Options).
 
@@ -1051,6 +1126,18 @@ remove_device_group_members1(Params, Options) ->
 %% Device
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+-spec create_device(Id::string(), 
+		    Type::string(),
+                    Attributes::list({Key::string(), Value::string()}),
+		    Options::list(Option::option())) ->
+				 Struct::tuple().
+
+create_device(Id, Type, Attrs, Options) 
+  when is_list(Id), is_list(Type), is_list(Attrs), is_list(Options) ->
+    %% Add account to attributes if needed
+    create_device1([{"device-id", Id}, {"device-type", Type}] ++ Attrs,
+	           Options).
+
 -spec create_device(Account::string(),
 		    Id::string(), 
 		    Type::string(),
@@ -1499,17 +1586,25 @@ parse_result(ResultStruct, {item, Item}) ->
     {"result",{struct,[{"result","ok"},{Item,Value}]}} = ResultStruct,
     Value;
 parse_result(ResultStruct, {list, Items}) ->
-    %% List result
+    %% List result 
     ?debug("{list, ~p}: result ~p",[Items, ResultStruct]),
     {"result", {struct,[{Items,{array, List}}]}} = ResultStruct,
     List;
 parse_result(ResultStruct, {lookup, Items}) ->
-    %% Lookup functions, returns zero or one item ??
-    ?debug("{item_list , ~p}: result ~p",[Items, ResultStruct]),
-    {"result",{struct,[{"result","ok"},{Items,{array, [{struct, Item}]}}]}} = 
-        ResultStruct,
-    ?debug("{item_list , ~p}: item ~p",[Items, Item]),
-    Item;
+    %% Lookup functions
+    ?debug("{lookup , ~p}: result ~p",[Items, ResultStruct]),
+    case ResultStruct of
+	{"result",{struct,[{"result","ok"},
+			   {Items,{array, [{struct, Item}]}}]}} -> Item;
+	{"result",{struct,[{"result","ok"},
+			   {Items,{array, []}}]}} -> []
+    end;
+parse_result(ResultStruct, {lookup_list, Items}) ->
+    %% Lookup list functions 
+    ?debug("{lookup_list , ~p}: result ~p",[Items, ResultStruct]),
+    {"result",{struct,[{"result","ok"},
+		       {Items,{array, List}}]}} = ResultStruct,
+    List;
 parse_result(ResultStruct, {error, Reason}) ->
     %% Expected error
     ?debug("{error, ~p}: result ~p",[Reason, ResultStruct]),
