@@ -445,19 +445,19 @@ remove_account_access(Account, Role, UserList, Options)
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 -spec create_yang_module(Account::string(),
-			 Name::string(), 
 			 Repo::string(), 
+			 Name::string(), 
 			 File::string(), 
 			 Options::list(Option::option())) ->
 			 Struct::tuple().
 
-create_yang_module(Account, Name, Repo, File, Options) 
-  when is_list(Account), is_list(Name), is_list(Repo), is_list(File), 
+create_yang_module(Account, Repo, Name, File, Options) 
+  when is_list(Account), is_list(Repo), is_list(Name), is_list(File), 
        is_list(Options) ->
     case file:read_file(File) of
 	{ok, Bin} ->
-	    create_yang_module1([{"name", Name},
-				 {"repository", Repo},
+	    create_yang_module1([{"repository", Repo},
+				 {"name", Name},
 				 {"yang-module", Bin},
                                  {"account", Account}],
 				Options);
