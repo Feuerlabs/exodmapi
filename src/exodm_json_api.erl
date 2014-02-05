@@ -1535,8 +1535,7 @@ json_request(Request, KeyValueList, TransId, Options) ->
     case http_post(JsonRequest, Options) of
 	{ok, {http_response, _Version, 200, _, _Header}, Data} ->
 	    String = binary_to_list(Data),
-	    ct:pal("Json request: ~p~n, result: ~p",
-		   [lists:flatten(JsonRequest), String]),
+	    ct:pal("json_request: result: ~p", [String]),
 	    {ok, {struct, Values}} = exo_json:decode_string(String),
 	    {"jsonrpc","2.0"} = lists:keyfind("jsonrpc",1,Values),
 	    {"id",TransId} = lists:keyfind("id",1,Values),
@@ -1562,6 +1561,8 @@ http_post(Request, Options) ->
     Url = proplists:get_value(url, Options),
     User  = proplists:get_value(user, Options),
     Pass  = proplists:get_value(password, Options),
+    ct:pal("http_post: user ~p, json request: ~p~n",
+	[User, lists:flatten(Request)]),
     exo_http:wpost(Url,
 		   [{'Content-Type', "application/json"}] ++ 
 		       exo_http:make_headers(User,Pass),
@@ -1578,18 +1579,27 @@ parse_result({error, econnrefused} = E, _Expected) ->
     E;
 parse_result(ResultStruct, "ok") ->
     %% Standard
-    ?debug("ok: result ~p",[ResultStruct]),
+    ?debug("ok-string: result ~p",[ResultStruct]),
+    {"result", {struct,[{"result", "ok"}]}} = ResultStruct,
+    "ok";
+parse_result(ResultStruct, ok) ->
+    %% Standard
+    ?debug("ok-atom: result ~p",[ResultStruct]),
     {"result", {struct,[{"result", "ok"}]}} = ResultStruct,
     ok;
 parse_result(ResultStruct, {item, Item}) ->
     ?debug("{item , ~p}: result ~p",[Item, ResultStruct]),
-    {"result",{struct,[{"result","ok"},{Item,Value}]}} = ResultStruct,
+    {"result",{struct,[{"result","ok"} | Items]}} = ResultStruct,
+    {Item, Value} = lists:keyfind(Item, 1, Items),
     Value;
 parse_result(ResultStruct, {list, Items}) ->
     %% List result 
     ?debug("{list, ~p}: result ~p",[Items, ResultStruct]),
-    {"result", {struct,[{Items,{array, List}}]}} = ResultStruct,
-    List;
+    case ResultStruct of
+	{"result", {struct,[{Items,{array, List}}]}} -> List;
+	{"result", {struct,[{"result", "ok"},
+	                    {Items,{array, List}}]}} -> List
+    end;
 parse_result(ResultStruct, {lookup, Items}) ->
     %% Lookup functions
     ?debug("{lookup , ~p}: result ~p",[Items, ResultStruct]),
@@ -1599,23 +1609,21 @@ parse_result(ResultStruct, {lookup, Items}) ->
 	{"result",{struct,[{"result","ok"},
 			   {Items,{array, []}}]}} -> []
     end;
-parse_result(ResultStruct, {lookup_list, Items}) ->
-    %% Lookup list functions 
-    ?debug("{lookup_list , ~p}: result ~p",[Items, ResultStruct]),
-    {"result",{struct,[{"result","ok"},
-		       {Items,{array, List}}]}} = ResultStruct,
-    List;
-parse_result(ResultStruct, {error, Reason}) ->
+parse_result(ResultStruct, {error, Reason} = E) ->
     %% Expected error
     ?debug("{error, ~p}: result ~p",[Reason, ResultStruct]),
-    {"result",{struct,[{"result", Reason}]}} = ResultStruct,
-    ok;
+    case ResultStruct of
+	{"result",{struct,[{"result", Reason}]}} -> ok;
+	{"error",{struct, Reason }} -> ok;
+	E ->  ok
+    end;
 parse_result(ResultStruct, result) ->
-    ?debug("code: result: ~p",[ResultStruct]),
+    ?debug("result: result: ~p",[ResultStruct]),
     case ResultStruct of
 	{"result", {struct,[{"result", "ok"}| _Tail]}} -> "ok";
 	{"result", {struct,[{"result", Result}| _Tail]}} -> {error, Result};
-	{"error",{struct, Error}} -> {error, Error}
+	{"error",{struct, Error}} -> {error, Error};
+	{error, _Error} = E ->  E
     end;
 parse_result(_ResultStruct, any) ->
     %% Don't check result
