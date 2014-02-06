@@ -49,7 +49,11 @@
          list_execution_permission/5,
          list_execution_permission/4]).
 -export([
+	 create_user/3,
 	 create_user/5,
+	 create_user/7,
+	 update_user/3,
+	 update_user/7,
 	 list_users/2,
 	 delete_user/2,
 	 lookup_user/2,
@@ -91,11 +95,16 @@
 	 remove_device_group_members/4,
 	 remove_device_group_members/3]).
 -export([
+	 create_device/4,
 	 create_device/7,
 	 create_device/6,
 	 create_device/5,
 	 delete_devices/3,
 	 delete_devices/2,
+	 lookup_device/3,
+	 lookup_device/2,
+	 lookup_device_attributes/4,
+	 lookup_device_attributes/3,
 	 list_devices/4,
 	 list_devices/3,
 	 list_devices/2,
@@ -230,6 +239,18 @@ list_account_roles(Account, N, Options)
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 -spec create_user(Name::string(), 
+		  Attributes::list({Key::string(), Value::string()}),
+		  Options::list(Option::option())) ->
+			 Struct::tuple().
+
+create_user(Name, Attributes, Options) 
+  when is_list(Name), is_list(Attributes), is_list(Options) ->
+    json_request("exodm:create-user",
+		 [{"uname", Name}| Attributes],
+		 integer_to_list(random()),
+		 Options).
+
+-spec create_user(Name::string(), 
 		  Mail::string(), 
 		  Passw::string(), 
 		  FullName::string(), 
@@ -244,6 +265,64 @@ create_user(Name, Mail, Passw, FullName, Options)
 		  {"email", Mail},
 		  {"password", Passw},
 		  {"fullname", FullName}],
+		 integer_to_list(random()),
+		 Options).
+
+-spec create_user(Name::string(), 
+		  Mail::string(), 
+		  Passw::string(), 
+		  FullName::string(),
+		  Phone::string(),
+		  Skype::string(),
+		  Options::list(Option::option())) ->
+			 Struct::tuple().
+
+create_user(Name, Mail, Passw, FullName, Phone, Skype, Options) 
+  when is_list(Name), is_list(Mail), is_list(Passw), is_list(FullName), 
+       is_list(Options) ->
+    json_request("exodm:create-user",
+		 [{"uname", Name},
+		  {"email", Mail},
+		  {"password", Passw},
+		  {"fullname", FullName},
+		  {"phone", Phone},
+		  {"skype", Skype}],
+		 integer_to_list(random()),
+		 Options).
+
+%%--------------------------------------------------------------------
+-spec update_user(Name::string(), 
+		  Attributes::list(string()),
+		  Options::list(Option::option())) ->
+			 Struct::tuple().
+
+update_user(Name, Attributes, Options) 
+  when is_list(Name), is_list(Attributes), is_list(Options) ->
+    json_request("exodm:update-user",
+		 [{"uname", Name}| Attributes],
+		 integer_to_list(random()),
+		 Options).
+
+%%--------------------------------------------------------------------
+-spec update_user(Name::string(), 
+		  Mail::string(), 
+		  Passw::string(), 
+		  FullName::string(),
+		  Phone::string(),
+		  Skype::string(),
+		  Options::list(Option::option())) ->
+			 Struct::tuple().
+
+update_user(Name, Mail, Passw, FullName, Phone, Skype, Options) 
+  when is_list(Name), is_list(Mail), is_list(Passw), is_list(FullName), 
+       is_list(Options) ->
+    json_request("exodm:update-user",
+		 [{"uname", Name},
+		  {"email", Mail},
+		  {"password", Passw},
+		  {"fullname", FullName},
+		  {"phone", Phone},
+		  {"skype", Skype}],
 		 integer_to_list(random()),
 		 Options).
 
@@ -366,19 +445,19 @@ remove_account_access(Account, Role, UserList, Options)
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 -spec create_yang_module(Account::string(),
-			 Name::string(), 
 			 Repo::string(), 
+			 Name::string(), 
 			 File::string(), 
 			 Options::list(Option::option())) ->
 			 Struct::tuple().
 
-create_yang_module(Account, Name, Repo, File, Options) 
-  when is_list(Account), is_list(Name), is_list(Repo), is_list(File), 
+create_yang_module(Account, Repo, Name, File, Options) 
+  when is_list(Account), is_list(Repo), is_list(Name), is_list(File), 
        is_list(Options) ->
     case file:read_file(File) of
 	{ok, Bin} ->
-	    create_yang_module1([{"name", Name},
-				 {"repository", Repo},
+	    create_yang_module1([{"repository", Repo},
+				 {"name", Name},
 				 {"yang-module", Bin},
                                  {"account", Account}],
 				Options);
@@ -1047,6 +1126,18 @@ remove_device_group_members1(Params, Options) ->
 %% Device
 %%
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+-spec create_device(Id::string(), 
+		    Type::string(),
+                    Attributes::list({Key::string(), Value::string()}),
+		    Options::list(Option::option())) ->
+				 Struct::tuple().
+
+create_device(Id, Type, Attrs, Options) 
+  when is_list(Id), is_list(Type), is_list(Attrs), is_list(Options) ->
+    %% Add account to attributes if needed
+    create_device1([{"device-id", Id}, {"device-type", Type}] ++ Attrs,
+	           Options).
+
 -spec create_device(Account::string(),
 		    Id::string(), 
 		    Type::string(),
@@ -1134,6 +1225,64 @@ delete_devices(IDs, Options)
 
 delete_devices1(Params, Options) ->
     json_request("exodm:delete-devices",
+		 Params,
+		 integer_to_list(random()),
+		 Options).    
+
+%%--------------------------------------------------------------------
+-spec lookup_device(Account::string(),
+		    ID::string(), 
+		    Options::list(Option::option())) ->
+			   Struct::tuple().
+
+lookup_device(Account, ID, Options) 
+  when is_list(Account), is_list(ID), is_list(Options) ->
+    lookup_device1([{"device-id", ID},
+		    {"account", Account}],
+		   Options).
+
+-spec lookup_device(ID::string(), 
+		    Options::list(Option::option())) ->
+				 Struct::tuple().
+
+lookup_device(ID, Options) 
+  when is_list(ID), is_list(Options) ->
+    lookup_device1([{"device-id", ID}],
+		    Options).
+
+lookup_device1(Params, Options) ->
+    json_request("exodm:lookup-device",
+		 Params,
+		 integer_to_list(random()),
+		 Options).    
+
+%%--------------------------------------------------------------------
+-spec lookup_device_attributes(Account::string(),
+			       ID::string(), 
+			       Attributes::list(string()),
+			       Options::list(Option::option())) ->
+			   Struct::tuple().
+
+lookup_device_attributes(Account, ID, Attributes, Options) 
+  when is_list(Account), is_list(ID), is_list(Attributes), is_list(Options) ->
+    lookup_device_attributes1([{"device-id", ID},
+			       {"attributes", {array, Attributes}}, 
+			       {"account", Account}],
+			      Options).
+
+-spec lookup_device_attributes(ID::string(), 
+			       Attributes::list(string()), 
+			       Options::list(Option::option())) ->
+				      Struct::tuple().
+
+lookup_device_attributes(ID, Attributes, Options) 
+  when is_list(ID), is_list(Options) ->
+    lookup_device_attributes1([{"device-id", ID},
+			       {"attributes", {array, Attributes}}],
+			      Options).
+
+lookup_device_attributes1(Params, Options) ->
+    json_request("exodm:lookup-device-attributes",
 		 Params,
 		 integer_to_list(random()),
 		 Options).    
@@ -1386,12 +1535,15 @@ json_request(Request, KeyValueList, TransId, Options) ->
     case http_post(JsonRequest, Options) of
 	{ok, {http_response, _Version, 200, _, _Header}, Data} ->
 	    String = binary_to_list(Data),
-	    ct:pal("Json request ~p~n,result ~p",
-		   [lists:flatten(JsonRequest), String]),
-	    {ok, {struct, Values}} = json2:decode_string(String),
+	    ct:pal("json_request: result: ~p", [String]),
+	    {ok, {struct, Values}} = exo_json:decode_string(String),
 	    {"jsonrpc","2.0"} = lists:keyfind("jsonrpc",1,Values),
 	    {"id",TransId} = lists:keyfind("id",1,Values),
-	    lists:keyfind("result",1, Values);
+	    %% If yang-validation failed you get error, not result.
+	    case lists:keyfind("result",1, Values) of
+		Result when is_tuple(Result) -> Result;
+		false -> lists:keyfind("error",1, Values)
+	    end;
 	{ok, {http_response, _Version, 401, Reason, _Header}, _Data} ->
 	    {error, Reason};
 	{error, _Error} = E ->
@@ -1399,7 +1551,7 @@ json_request(Request, KeyValueList, TransId, Options) ->
     end.
 
 json_encode(Request, KeyValueList, TransId) ->
-    json2:encode({struct, [{"jsonrpc", "2.0"},
+    exo_json:encode({struct, [{"jsonrpc", "2.0"},
 			   {"method", Request},
 			   {"id", TransId},
 			   {"params",
@@ -1409,6 +1561,8 @@ http_post(Request, Options) ->
     Url = proplists:get_value(url, Options),
     User  = proplists:get_value(user, Options),
     Pass  = proplists:get_value(password, Options),
+    ct:pal("http_post: user ~p, json request: ~p~n",
+	[User, lists:flatten(Request)]),
     exo_http:wpost(Url,
 		   [{'Content-Type', "application/json"}] ++ 
 		       exo_http:make_headers(User,Pass),
@@ -1425,34 +1579,52 @@ parse_result({error, econnrefused} = E, _Expected) ->
     E;
 parse_result(ResultStruct, "ok") ->
     %% Standard
-    ?debug("ok: result ~p",[ResultStruct]),
+    ?debug("ok-string: result ~p",[ResultStruct]),
+    {"result", {struct,[{"result", "ok"}]}} = ResultStruct,
+    "ok";
+parse_result(ResultStruct, ok) ->
+    %% Standard
+    ?debug("ok-atom: result ~p",[ResultStruct]),
     {"result", {struct,[{"result", "ok"}]}} = ResultStruct,
     ok;
 parse_result(ResultStruct, {item, Item}) ->
     ?debug("{item , ~p}: result ~p",[Item, ResultStruct]),
-    {"result",{struct,[{"result","ok"},{Item,Value}]}} = ResultStruct,
+    {"result",{struct,[{"result","ok"} | Items]}} = ResultStruct,
+    {Item, Value} = lists:keyfind(Item, 1, Items),
     Value;
 parse_result(ResultStruct, {list, Items}) ->
-    %% List result
+    %% List result 
     ?debug("{list, ~p}: result ~p",[Items, ResultStruct]),
-    {"result", {struct,[{Items,{array, List}}]}} = ResultStruct,
-    List;
+    case ResultStruct of
+	{"result", {struct,[{Items,{array, List}}]}} -> List;
+	{"result", {struct,[{"result", "ok"},
+	                    {Items,{array, List}}]}} -> List
+    end;
 parse_result(ResultStruct, {lookup, Items}) ->
-    %% Lookup functions, returns zero or one item ??
-    ?debug("{item_list , ~p}: result ~p",[Items, ResultStruct]),
-    {"result",{struct,[{"result","ok"},{Items,{array, [{struct, Item}]}}]}} = 
-        ResultStruct,
-    ?debug("{item_list , ~p}: item ~p",[Items, Item]),
-    Item;
-parse_result(ResultStruct, {error, Reason}) ->
+    %% Lookup functions
+    ?debug("{lookup , ~p}: result ~p",[Items, ResultStruct]),
+    case ResultStruct of
+	{"result",{struct,[{"result","ok"},
+			   {Items,{array, [{struct, Item}]}}]}} -> Item;
+	{"result",{struct,[{"result","ok"},
+			   {Items,{array, []}}]}} -> []
+    end;
+parse_result(ResultStruct, {error, Reason} = E) ->
     %% Expected error
     ?debug("{error, ~p}: result ~p",[Reason, ResultStruct]),
-    {"result",{struct,[{"result", Reason}]}} = ResultStruct,
-    ok;
-parse_result(ResultStruct, resultcode) ->
-    ?debug("code: result ~p",[ResultStruct]),
-    {"result", {struct,[{"result", Result}| _Tail]}} = ResultStruct,
-    Result;
+    case ResultStruct of
+	{"result",{struct,[{"result", Reason}]}} -> ok;
+	{"error",{struct, Reason }} -> ok;
+	E ->  ok
+    end;
+parse_result(ResultStruct, result) ->
+    ?debug("result: result: ~p",[ResultStruct]),
+    case ResultStruct of
+	{"result", {struct,[{"result", "ok"}| _Tail]}} -> "ok";
+	{"result", {struct,[{"result", Result}| _Tail]}} -> {error, Result};
+	{"error",{struct, Error}} -> {error, Error};
+	{error, _Error} = E ->  E
+    end;
 parse_result(_ResultStruct, any) ->
     %% Don't check result
     ?debug("any: result ~p",[_ResultStruct]),
