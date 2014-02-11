@@ -107,7 +107,8 @@
 	 lookup_device_attributes/3,
 	 list_devices/4,
 	 list_devices/3,
-	 list_devices/2,
+	 list_devices_attributes/6,
+	 list_devices_attributes/5,
 	 list_device_group_members/5,
 	 list_device_group_members/4,
 	 list_device_group_members/3,
@@ -1305,35 +1306,58 @@ list_devices(Account, N, Prev, Options)
 -spec list_devices(N::integer(),
 		   Prev::string(),
 		   Options::list(Option::option())) ->
-			  Struct::tuple();
-		  (Account::string(),
-		   N::integer(),
-		   Options::list(Option::option())) ->
-			       Struct::tuple().
+			  Struct::tuple().
 
 list_devices(N, Prev, Options) 
   when is_integer(N), N>=0, is_list(Prev), is_list(Options)  ->
     list_devices1([{"n", N},
 		   {"previous", Prev}],
-		  Options);
-list_devices(Account, N, Options) 
-  when is_list(Account), is_integer(N), N>=0, is_list(Options) ->
-    list_devices1([{"n", N},
-		   {"previous", ""},
-                   {"account", Account}],
 		  Options).
 
--spec list_devices(N::integer(),
-		   Options::list(Option::option())) ->
-			       Struct::tuple().
-list_devices(N, Options) 
-  when is_integer(N), N>=0, is_list(Options) ->
-    list_devices1([{"n", N},
-		   {"previous", ""}],
-		  Options).
 
 list_devices1(Params, Options) ->
     json_request("exodm:list-devices",
+		 Params,
+		 integer_to_list(random()),
+		 Options).
+
+%%--------------------------------------------------------------------
+-spec list_devices_attributes(Account::string(),
+			      N::integer(),
+			      Prev::string(),
+			      Attrs::list(string()),
+			      Pattern::string(),
+			      Options::list(Option::option())) ->
+				     Struct::tuple().
+
+list_devices_attributes(Account, N, Prev, Attrs, Pattern, Options) 
+  when is_list(Account), is_integer(N), N>=0, is_list(Prev), 
+       is_list(Attrs), is_list(Pattern), is_list(Options) ->
+    list_devices_attributes1([{"n", N},
+			      {"previous", Prev},
+			      {"attributes", Attrs},
+			      {"pattern", Pattern},
+			      {"account", Account}],
+			     Options).
+
+-spec list_devices_attributes(N::integer(),
+			      Prev::string(),
+			      Attrs::list(string()),
+			      Pattern::string(),
+			      Options::list(Option::option())) ->
+			       Struct::tuple().
+
+list_devices_attributes(N, Prev, Attrs, Pattern, Options) 
+  when is_integer(N), N>=0, is_list(Prev), 
+       is_list(Attrs), is_list(Pattern), is_list(Options) ->
+    list_devices_attributes1([{"n", N},
+			      {"previous", Prev},
+			      {"attributes", Attrs},
+			      {"pattern", Pattern}],
+			     Options).
+
+list_devices_attributes1(Params, Options) ->
+    json_request("exodm:list-devices-attributes",
 		 Params,
 		 integer_to_list(random()),
 		 Options).
