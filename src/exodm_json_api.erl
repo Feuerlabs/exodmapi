@@ -107,6 +107,7 @@
 	 lookup_device_attributes/3,
 	 list_devices/4,
 	 list_devices/3,
+	 list_devices_attributes/7,
 	 list_devices_attributes/6,
 	 list_devices_attributes/5,
 	 list_device_group_members/5,
@@ -1327,16 +1328,18 @@ list_devices1(Params, Options) ->
 			      Prev::string(),
 			      Attrs::list(string()),
 			      Pattern::string(),
+			      Direction::string(),
 			      Options::list(Option::option())) ->
 				     Struct::tuple().
 
-list_devices_attributes(Account, N, Prev, Attrs, Pattern, Options) 
+list_devices_attributes(Account, N, Prev, Attrs, Pattern, Direction, Options) 
   when is_list(Account), is_integer(N), N>=0, is_list(Prev), 
        is_list(Attrs), is_list(Pattern), is_list(Options) ->
     list_devices_attributes1([{"n", N},
 			      {"previous", Prev},
 			      {"attributes", Attrs},
 			      {"pattern", Pattern},
+			      {"direction", Direction},
 			      {"account", Account}],
 			     Options).
 
@@ -1344,8 +1347,26 @@ list_devices_attributes(Account, N, Prev, Attrs, Pattern, Options)
 			      Prev::string(),
 			      Attrs::list(string()),
 			      Pattern::string(),
+			      Direction::string(),
 			      Options::list(Option::option())) ->
-			       Struct::tuple().
+				     Struct::tuple().
+
+list_devices_attributes(N, Prev, Attrs, Pattern, Direction, Options) 
+  when is_integer(N), N>=0, is_list(Prev), 
+       is_list(Attrs), is_list(Pattern), is_list(Options) ->
+    list_devices_attributes1([{"n", N},
+			      {"previous", Prev},
+			      {"attributes", Attrs},
+			      {"pattern", Pattern},
+			      {"direction", Direction}],
+			     Options).
+
+-spec list_devices_attributes(N::integer(),
+			      Prev::string(),
+			      Attrs::list(string()),
+			      Pattern::string(),
+			      Options::list(Option::option())) ->
+				     Struct::tuple().
 
 list_devices_attributes(N, Prev, Attrs, Pattern, Options) 
   when is_integer(N), N>=0, is_list(Prev), 
