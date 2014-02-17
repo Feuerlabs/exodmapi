@@ -32,16 +32,14 @@
 	 create_account/5,
 	 lookup_account/2,
 	 list_accounts/3,
-	 list_accounts/2,
 	 list_account_roles/4,
-	 list_account_roles/3,
 	 delete_account/2]).
 -export([
 	 create_yang_module/5,
 	 create_yang_module/4,
+	 list_yang_modules/6,
 	 list_yang_modules/5,
 	 list_yang_modules/4,
-	 list_yang_modules/3,
 	 lookup_yang_module/4,
 	 lookup_yang_module/3,
 	 delete_yang_module/4,
@@ -54,12 +52,12 @@
 	 create_user/7,
 	 update_user/3,
 	 update_user/7,
-	 list_users/2,
+	 list_users/3,
 	 delete_user/2,
 	 lookup_user/2,
 	 add_account_access/4,
+	 list_account_users/5,
 	 list_account_users/4,
-	 list_account_users/3,
 	 list_user_accounts/2,
 	 remove_account_access/4]).
 -export([
@@ -67,7 +65,6 @@
 	 create_config_set/4,
 	 list_config_sets/4,
 	 list_config_sets/3,
-	 list_config_sets/2,
 	 delete_config_set/3,
 	 delete_config_set/2,
 	 add_config_set_members/4,
@@ -79,7 +76,6 @@
 	 create_device_type/3,
 	 list_device_types/4,
 	 list_device_types/3,
-	 list_device_types/2,
 	 delete_device_type/3,
 	 delete_device_type/2]).
 -export([
@@ -87,7 +83,6 @@
 	 create_device_group/3,
 	 list_device_groups/4,
 	 list_device_groups/3,
-	 list_device_groups/2,
 	 delete_device_group/3,
 	 delete_device_group/2,
 	 add_device_group_members/4,
@@ -106,19 +101,15 @@
 	 lookup_device_attributes/4,
 	 lookup_device_attributes/3,
 	 list_devices/4,
-	 list_devices/3,
 	 list_devices_attributes/7,
 	 list_devices_attributes/6,
 	 list_devices_attributes/5,
 	 list_device_group_members/5,
 	 list_device_group_members/4,
-	 list_device_group_members/3,
 	 list_device_type_members/5,
 	 list_device_type_members/4,
-	 list_device_type_members/3,
 	 list_config_set_members/5,
-	 list_config_set_members/4,
-	 list_config_set_members/3]).
+	 list_config_set_members/4]).
 
 -export([json_request/4]). %% Generic
 -export([parse_result/2]).
@@ -152,18 +143,6 @@ create_account(Name, Mail, Passw, FullName, Options)
 		 integer_to_list(random()),
 		 Options).
 
-%%--------------------------------------------------------------------
--spec list_accounts(N::integer(),
-		   Options::list(Option::option())) ->
-			  Struct::tuple().
-
-list_accounts(N, Options) 
-  when is_integer(N), N>=0, is_list(Options) ->
-    json_request("exodm:list-accounts",
-		 [{"n", N},
-		  {"previous", ""}],
-		 integer_to_list(random()),
-		 Options).
 %%--------------------------------------------------------------------
 -spec list_accounts(N::integer(),
 		   Prev::string(),
@@ -219,20 +198,6 @@ list_account_roles(Account, N, Prev, Options)
 		  {"previous", Prev}],
 		 integer_to_list(random()),
 		 admin).
-
--spec list_account_roles(Account::string(), 
-			 N::integer(),
-			 Options::list(Option::option())) ->
-			    Struct::tuple().
-
-list_account_roles(Account, N, Options)
-  when is_list(Account), is_integer(N), N>=0, is_list(Options) ->
-    json_request("exodm:list-account-roles",
-		 [{"account", Account},
-                  {"n", N},
-		  {"previous", ""}],
-		 integer_to_list(random()),
-		 Options).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -330,14 +295,15 @@ update_user(Name, Mail, Passw, FullName, Phone, Skype, Options)
 
 %%--------------------------------------------------------------------
 -spec list_users(N::integer(),
+		 Prev::string(),
 		 Options::list(Option::option())) ->
 			    Struct::tuple().
 
-list_users(N, Options) 
+list_users(N, Prev, Options) 
   when is_integer(N), N>=0, is_list(Options) ->
     json_request("exodm:list-users",
 		 [{"n", N},
-		  {"previous", ""}],
+		  {"previous", Prev}],
 		 integer_to_list(random()),
 		 Options).
 
@@ -384,19 +350,20 @@ add_account_access(Account, Role, UserList, Options)
 %%--------------------------------------------------------------------
 -spec list_account_users(Account::string(),
 			 N::integer(),
+			 Prev::string(),
+			 Direction::string(),
 			 Options::list(Option::option())) ->
 				Struct::tuple().
 
-list_account_users(Account, N, Options) 
-  when is_list(Account), is_integer(N), N>=0, is_list(Options) ->
-    json_request("exodm:list-account-users",
-		 [{"account", Account},
-		  {"n", N},
-		  {"previous", ""}],
-		 integer_to_list(random()),
-		 Options).
-
-%%--------------------------------------------------------------------
+list_account_users(Account, N, Prev, Direction, Options) 
+  when is_list(Account), is_integer(N), N>=0, is_list(Prev), 
+       is_list(Options) ->
+    list_account_user1([{"account", Account},
+			{"n", N},
+			{"previous", Prev},
+			{"direction", Direction}],
+		       Options).
+ 
 -spec list_account_users(Account::string(),
 			 N::integer(),
 			 Prev::string(),
@@ -406,13 +373,16 @@ list_account_users(Account, N, Options)
 list_account_users(Account, N, Prev, Options) 
   when is_list(Account), is_integer(N), N>=0, is_list(Prev), 
        is_list(Options) ->
+    list_account_user1([{"account", Account},
+			{"n", N},
+			{"previous", Prev}],
+		       Options).
+
+list_account_user1(Params, Options) ->
     json_request("exodm:list-account-users",
-		 [{"account", Account},
-		  {"n", N},
-		  {"previous", Prev}],
+		 Params,
 		 integer_to_list(random()),
 		 Options).
-
 %%--------------------------------------------------------------------
 -spec list_user_accounts(Name::string(),
 			 Options::list(Option::option())) ->
@@ -496,6 +466,24 @@ create_yang_module1(Params, Options) when is_list(Params)->
 			Repo::string(), 
 			N::integer(),
 			Prev::string(), 
+			Direction::string(),
+			Options::list(Option::option())) ->
+			       Struct::tuple().
+
+list_yang_modules(Account, Repo, N, Prev, Direction, Options) 
+  when is_list(Account), is_list(Repo), is_integer(N), N>=0, is_list(Prev), 
+       is_list(Options) ->
+    list_yang_modules1([{"n", N},
+			{"repository", Repo},
+			{"previous", Prev},
+			{"direction", Direction},
+                        {"account", Account}],
+		       Options).
+
+-spec list_yang_modules(Account::string(), 
+			Repo::string(), 
+			N::integer(),
+			Prev::string(), 
 			Options::list(Option::option())) ->
 			       Struct::tuple().
 
@@ -508,42 +496,18 @@ list_yang_modules(Account, Repo, N, Prev, Options)
                         {"account", Account}],
 		       Options).
 
--spec list_yang_modules(Account::string(), 
-			Repo::string(), 
-			N::integer(),
-			Options::list(Option::option())) ->
-			       Struct::tuple();
-		       (Account::string(), 
+-spec list_yang_modules(Repo::string(), 
 			N::integer(),
 			Prev::string(), 
 			Options::list(Option::option())) ->
 			       Struct::tuple().
 
-list_yang_modules(Account, Repo, N, Options) 
-  when is_list(Account), is_list(Repo), is_integer(N), N>=0, 
-       is_list(Options) ->
-    list_yang_modules1([{"n", N},
-			{"repository", Repo},
-			{"previous", ""},
-                        {"account", Account}],
-		       Options);
 list_yang_modules(Repo, N, Prev, Options) 
   when is_list(Repo), is_integer(N), N>=0, is_list(Prev), 
        is_list(Options) ->
     list_yang_modules1([{"n", N},
 			{"repository", Repo},
 			{"previous", Prev}],
-		       Options).
-
--spec list_yang_modules(Repo::string(), 
-			N::integer(),
-			Options::list(Option::option())) ->
-			       Struct::tuple().
-list_yang_modules(Repo, N, Options) 
-  when is_list(Repo), is_integer(N), N>=0, is_list(Options) ->
-    list_yang_modules1([{"n", N},
-			{"repository", Repo},
-			{"previous", ""}],
 		       Options).
 
 list_yang_modules1(Params, Options) ->
@@ -706,34 +670,15 @@ list_config_sets(Account, N, Prev, Options)
                        {"account", Account}],
 		      Options).
 
--spec list_config_sets(Account::string(),
-		       N::integer(),
-		       Options::list(Option::option())) ->
-			      Struct::tuple();
-		      (N::integer(),
+-spec list_config_sets(N::integer(),
 		       Prev::string(),
 		       Options::list(Option::option())) ->
 			      Struct::tuple().
 
-list_config_sets(Account, N, Options) 
-  when is_list(Account), is_integer(N), N>=0, is_list(Options) ->
-    list_config_sets1([{"n", N},
-		       {"previous", ""},
-                       {"account", Account}],
-		      Options);
 list_config_sets(N, Prev, Options) 
   when is_integer(N), N>=0, is_list(Prev), is_list(Options) ->
     list_config_sets1([{"n", N},
 		       {"previous", Prev}],
-		      Options).
-
--spec list_config_sets(N::integer(),
-		       Options::list(Option::option())) ->
-			      Struct::tuple().
-list_config_sets(N, Options) 
-  when is_integer(N), N>=0, is_list(Options) ->
-    list_config_sets1([{"n", N},
-		       {"previous", ""}],
 		      Options).
 
 list_config_sets1(Params, Options) ->
@@ -884,32 +829,12 @@ list_device_types(Account, N, Prev, Options)
 -spec list_device_types(N::integer(),
 			Prev::string(),
 			Options::list(Option::option())) ->
-			       Struct::tuple();
-		       (Account::string(),
-			N::integer(),
-			Options::list(Option::option())) ->
 			       Struct::tuple().
 
 list_device_types(N, Prev, Options) 
   when is_integer(N), N>=0, is_list(Prev), is_list(Options) ->
     list_device_types1([{"n", N},
 			{"previous", Prev}],
-		       Options);
-list_device_types(Account, N, Options) 
-  when is_list(Account), is_integer(N), N>=0 ->
-    list_device_types1([{"n", N},
-			{"previous", ""},
-                        {"account", Account}],
-		       Options).
-
--spec list_device_types(N::integer(),
-			Options::list(Option::option())) ->
-			       Struct::tuple().
-
-list_device_types(N, Options) 
-  when is_integer(N), N>=0, is_list(Options) ->
-    list_device_types1([{"n", N},
-			{"previous", ""}],
 		       Options).
 
 list_device_types1(Params, Options) ->
@@ -997,32 +922,12 @@ list_device_groups(Account, N, Prev, Options)
 -spec list_device_groups(N::integer(),
 			 Prev::string(),
 			 Options::list(Option::option())) ->
-				Struct::tuple();
-		        (Account::string(),
-			 N::integer(),
-			 Options::list(Option::option())) ->
 				Struct::tuple().
 
 list_device_groups(N, Prev, Options)
   when is_integer(N), N>=0, is_list(Prev), is_list(Options) ->
     list_device_groups1([{"n", N},
 			 {"previous", Prev}],
-			Options);
-list_device_groups(Account, N, Options)
-  when is_list(Account), is_integer(N), N>=0, is_list(Options) ->
-    list_device_groups1([{"n", N},
-			 {"previous", ""},
-                         {"account", Account}],
-			Options).
-
--spec list_device_groups(N::integer(),
-			Options::list(Option::option())) ->
-			       Struct::tuple().
-
-list_device_groups(N, Options)
-  when is_integer(N), N>=0, is_list(Options) ->
-    list_device_groups1([{"n", N},
-			 {"previous", ""}],
 			Options).
 
 list_device_groups1(Params, Options) ->
@@ -1304,18 +1209,6 @@ list_devices(Account, N, Prev, Options)
                    {"account", Account}],
 		  Options).
 
--spec list_devices(N::integer(),
-		   Prev::string(),
-		   Options::list(Option::option())) ->
-			  Struct::tuple().
-
-list_devices(N, Prev, Options) 
-  when is_integer(N), N>=0, is_list(Prev), is_list(Options)  ->
-    list_devices1([{"n", N},
-		   {"previous", Prev}],
-		  Options).
-
-
 list_devices1(Params, Options) ->
     json_request("exodm:list-devices",
 		 Params,
@@ -1404,11 +1297,6 @@ list_device_group_members(Account, Group, N, Prev, Options)
 				N::integer(),
 				Prev::string(),
 				Options::list(Option::option())) ->
-				       Struct::tuple();
-			       (Account::string(),
-				Group::string(),
-				N::integer(),
-				Options::list(Option::option())) ->
 				       Struct::tuple().
 
 list_device_group_members(Group, N, Prev, Options) 
@@ -1417,25 +1305,6 @@ list_device_group_members(Group, N, Prev, Options)
     list_device_group_members1([{"group-id", Group},
 				{"n", N},
 				{"previous", Prev}],
-			       Options);
-list_device_group_members(Account, Group, N, Options) 
-  when is_list(Account), is_list(Group), is_integer(N), N>=0, 
-       is_list(Options) ->
-    list_device_group_members1([{"group-id", Group},
-				{"n", N},
-				{"previous", ""},
-                                {"account", Account}],
-			       Options).
-
--spec list_device_group_members(Group::string(),
-				N::integer(),
-				Options::list(Option::option())) ->
-				       Struct::tuple().
-list_device_group_members(Group, N, Options) 
-  when is_integer(Group), is_integer(N), N>=0, is_list(Options) ->
-    list_device_group_members1([{"group-id", Group},
-				{"n", N},
-				{"previous", ""}],
 			       Options).
 
 list_device_group_members1(Params, Options) ->
@@ -1465,11 +1334,6 @@ list_device_type_members(Account, Name, N, Prev, Options)
 			       N::integer(),
 			       Prev::string(),
 			       Options::list(Option::option())) ->
-				      Struct::tuple();
-			      (Account::string(),
-			       Name::string(),
-			       N::integer(),
-			       Options::list(Option::option())) ->
 				      Struct::tuple().
 
 list_device_type_members(Name, N, Prev, Options) 
@@ -1477,27 +1341,7 @@ list_device_type_members(Name, N, Prev, Options)
        is_list(Options) ->
     list_device_type_members1([{"name", Name},
 			       {"n", N},
-			       {"previous", ""}],
-			      Options);
-list_device_type_members(Account, Name, N, Options) 
-  when is_list(Account), is_list(Name), is_integer(N), N>=0, 
-       is_list(Options) ->
-    list_device_type_members1([{"name", Name},
-			       {"n", N},
-			       {"previous", ""},
-                               {"account", Account}],
-			      Options).
-
--spec list_device_type_members(Name::string(),
-			       N::integer(),
-			       Options::list(Option::option())) ->
-				      Struct::tuple().
-
-list_device_type_members(Name, N, Options) 
-  when is_list(Name), is_integer(N), N>=0, is_list(Options) ->
-    list_device_type_members1([{"name", Name},
-			       {"n", N},
-			       {"previous", ""}],
+			       {"previous", Prev}],
 			      Options).
 
 list_device_type_members1(Params, Options) ->
@@ -1527,12 +1371,7 @@ list_config_set_members(Account, Name, N, Prev, Options)
 			      N::integer(),
 			      Prev::string(),
 			      Options::list(Option::option())) ->
-				     Struct::tuple();
-			     (Account::string(),
-			      Name::string(),
-			      N::integer(),
-			      Options::list(Option::option())) ->
-				      Struct::tuple().
+				     Struct::tuple().
 
 list_config_set_members(Name, N, Prev, Options) 
   when is_list(Name), is_integer(N), N>=0, is_list(Prev), 
@@ -1540,26 +1379,6 @@ list_config_set_members(Name, N, Prev, Options)
     list_config_set_members1([{"name", Name},
 			      {"n", N},
 			      {"previous", Prev}],
-			     Options);
-list_config_set_members(Account, Name, N, Options) 
-  when is_list(Account), is_list(Name), is_integer(N), N>=0, 
-       is_list(Options) ->
-    list_config_set_members1([{"name", Name},
-			      {"n", N},
-			      {"previous", ""},
-                              {"account", Account}],
-			     Options).
-
--spec list_config_set_members(Name::string(),
-			      N::integer(),
-			      Options::list(Option::option())) ->
-				      Struct::tuple().
-
-list_config_set_members(Name, N, Options) 
-  when is_list(Name), is_integer(N), N>=0, is_list(Options) ->
-    list_config_set_members1([{"name", Name},
-			      {"n", N},
-			      {"previous", ""}],
 			     Options).
 
 list_config_set_members1(Params, Options) ->
