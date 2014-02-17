@@ -101,6 +101,7 @@
 	 lookup_device_attributes/4,
 	 lookup_device_attributes/3,
 	 list_devices/4,
+	 list_devices/3,
 	 list_devices_attributes/7,
 	 list_devices_attributes/6,
 	 list_devices_attributes/5,
@@ -197,7 +198,7 @@ list_account_roles(Account, N, Prev, Options)
                   {"n", N},
 		  {"previous", Prev}],
 		 integer_to_list(random()),
-		 admin).
+		 Options).
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1207,6 +1208,17 @@ list_devices(Account, N, Prev, Options)
     list_devices1([{"n", N},
 		   {"previous", Prev},
                    {"account", Account}],
+		  Options).
+
+-spec list_devices(N::integer(),
+		   Prev::string(),
+		   Options::list(Option::option())) ->
+			       Struct::tuple().
+
+list_devices(N, Prev, Options) 
+  when is_integer(N), N>=0, is_list(Prev), is_list(Options) ->
+    list_devices1([{"n", N},
+		   {"previous", Prev}],
 		  Options).
 
 list_devices1(Params, Options) ->
