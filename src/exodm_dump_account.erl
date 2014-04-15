@@ -1,3 +1,4 @@
+%%% -*- coding: latin-1 -*-
 %%% @author Malotte W Lönne <malotte@malotte.net>
 %%% @copyright (C) 2013, Tony Rogvall
 %%% @doc
@@ -6,8 +7,6 @@
 %%% Created : 2013 by Malotte W Lönne
 
 -module(exodm_dump_account).
-
--include_lib("lager/include/log.hrl").
 
 -export([run/1,
          run/2]).
@@ -44,53 +43,53 @@ run(AName) when is_list(AName) ->
 -spec run(AName::string(), Api::atom()) -> ok.
 
 run(AName, json) when is_list(AName)->
-    ?info("Dumping account ~s",[AName]),
+    lager:info("Dumping account ~s",[AName]),
     %% Mod:configure_api(??),
     run1(?JSON, #account {aname = AName}).
 
 
 run1(Mod, _Account=#account {aname = AName}) ->
     Roles = all(Mod, list_account_roles, "roles", [AName], "", []),
-    ?info("Roles: ~p",[Roles]),
+    lager:info("Roles: ~p",[Roles]),
     UsersWithRoles = all(Mod, list_account_users, "users", [AName], "", []),
-    ?info("Users: ~p",[decode_users(UsersWithRoles, [])]),
+    lager:info("Users: ~p",[decode_users(UsersWithRoles, [])]),
     
     Yangs = 
         all(Mod, list_yang_modules, "yang-modules", [AName, "user"], "", []),
-    ?info("Yang modules: ~p",[Yangs]),
+    lager:info("Yang modules: ~p",[Yangs]),
     Sets = all(Mod, list_config_sets, "config-sets", [AName], "", []),
-    ?info("Config sets: ~p",[Sets]),
+    lager:info("Config sets: ~p",[Sets]),
     Types = all(Mod, list_device_types, "device-types", [AName], "", []),
-    ?info("Device types: ~p",[Types]),
+    lager:info("Device types: ~p",[Types]),
     Groups = all(Mod, list_device_groups, "device-groups", [AName], 0, []),
-    ?info("Device groups: ~p",[Groups]),
+    lager:info("Device groups: ~p",[Groups]),
     Devs = all(Mod, list_devices, "devices", [AName], "", []),
-    ?info("Devices: ~p",[Devs]),
+    lager:info("Devices: ~p",[Devs]),
 
     %% Store device ids for later checks
     DevIds = [name(Dev) || Dev <-Devs],
-    ?info("Device ids: ~p",[DevIds]),
+    lager:info("Device ids: ~p",[DevIds]),
 
     SetMembers = 
         members(Mod, list_config_set_members, "config-set-members", 
                 AName, Sets),
-    ?info("Sets with members: ~p",[SetMembers]),
+    lager:info("Sets with members: ~p",[SetMembers]),
     VerfiedSetMembers = members_exists(SetMembers, DevIds, []),
-    ?info("Sets with verified members: ~p",[VerfiedSetMembers]),
+    lager:info("Sets with verified members: ~p",[VerfiedSetMembers]),
 
     TypeMembers = 
         members(Mod, list_device_type_members, "device-type-members", 
                 AName, Types),
-    ?info("Types with members: ~p",[TypeMembers]),
+    lager:info("Types with members: ~p",[TypeMembers]),
     VerfiedTypeMembers = members_exists(TypeMembers, DevIds, []),
-    ?info("Types with verified members: ~p",[VerfiedTypeMembers]),
+    lager:info("Types with verified members: ~p",[VerfiedTypeMembers]),
 
     GroupMembers = 
         members(Mod, list_device_group_members, "device-group-members", 
                 AName, Groups),
-    ?info("Groups with members: ~p",[GroupMembers]),
+    lager:info("Groups with members: ~p",[GroupMembers]),
     VerfiedGroupMembers = members_exists(GroupMembers, DevIds, []),
-    ?info("Groups with verified members: ~p",[VerfiedGroupMembers]),   
+    lager:info("Groups with verified members: ~p",[VerfiedGroupMembers]),   
     
     %% Write yang sources to file
     YangSrcs = 
@@ -169,7 +168,7 @@ device_exists([DevId | Rest], DevIds, Acc) ->
             device_exists(Rest, DevIds, [DevId | Acc]);
         false ->
             %% Warning ??
-            ?info("Device ~p does not exist!!",[DevId]),
+            lager:info("Device ~p does not exist!!",[DevId]),
             device_exists(Rest, DevIds, Acc)
     end.
     
@@ -177,9 +176,9 @@ device_exists([DevId | Rest], DevIds, Acc) ->
 store_yang_srcs(_AName, []) -> 
     ok;
 store_yang_srcs(AName, [{Id, Src} | Rest]) ->
-    ?debug("Yang module ~s src ~s .",[Id, Src]),
+    lager:debug("Yang module ~s src ~s .",[Id, Src]),
     case file:write_file(filename:join("/tmp", AName++Id), Src) of
-        ok -> ?info("Yang module src ~p stored.",[Id]);
-        {error, Reason} -> ?info("Yang module src ~p store failed, reason ~p", [Id, Reason])
+        ok -> lager:info("Yang module src ~p stored.",[Id]);
+        {error, Reason} -> lager:info("Yang module src ~p store failed, reason ~p", [Id, Reason])
     end,
     store_yang_srcs(AName, Rest).

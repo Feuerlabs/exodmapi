@@ -1,3 +1,4 @@
+%%% -*- coding: latin-1 -*-
 %%%---- BEGIN COPYRIGHT --------------------------------------------------------
 %%%
 %%% Copyright (C) 2007 - 2013, Rogvall Invest AB, <tony@rogvall.se>
@@ -25,8 +26,6 @@
 %%% @end
 %%%-------------------------------------------------------------------
 -module(exodm_json_api).
-
--include_lib("lager/include/log.hrl").
 
 -export([
 	 create_account/5,
@@ -1452,22 +1451,22 @@ parse_result({error, econnrefused} = E, _Expected) ->
     E;
 parse_result(ResultStruct, "ok") ->
     %% Standard
-    ?debug("ok-string: result ~p",[ResultStruct]),
+    lager:debug("ok-string: result ~p",[ResultStruct]),
     {"result", {struct,[{"result", "ok"}]}} = ResultStruct,
     "ok";
 parse_result(ResultStruct, ok) ->
     %% Standard
-    ?debug("ok-atom: result ~p",[ResultStruct]),
+    lager:debug("ok-atom: result ~p",[ResultStruct]),
     {"result", {struct,[{"result", "ok"}]}} = ResultStruct,
     ok;
 parse_result(ResultStruct, {item, Item}) ->
-    ?debug("{item , ~p}: result ~p",[Item, ResultStruct]),
+    lager:debug("{item , ~p}: result ~p",[Item, ResultStruct]),
     {"result",{struct,[{"result","ok"} | Items]}} = ResultStruct,
     {Item, Value} = lists:keyfind(Item, 1, Items),
     Value;
 parse_result(ResultStruct, {list, Items}) ->
     %% List result 
-    ?debug("{list, ~p}: result ~p",[Items, ResultStruct]),
+    lager:debug("{list, ~p}: result ~p",[Items, ResultStruct]),
     case ResultStruct of
 	{"result", {struct,[{Items,{array, List}}]}} -> List;
 	{"result", {struct,[{"result", "ok"},
@@ -1475,7 +1474,7 @@ parse_result(ResultStruct, {list, Items}) ->
     end;
 parse_result(ResultStruct, {lookup, Items}) ->
     %% Lookup functions
-    ?debug("{lookup , ~p}: result ~p",[Items, ResultStruct]),
+    lager:debug("{lookup , ~p}: result ~p",[Items, ResultStruct]),
     case ResultStruct of
 	{"result",{struct,[{"result","ok"},
 			   {Items,{array, [{struct, Item}]}}]}} -> Item;
@@ -1484,14 +1483,14 @@ parse_result(ResultStruct, {lookup, Items}) ->
     end;
 parse_result(ResultStruct, {error, Reason} = E) ->
     %% Expected error
-    ?debug("{error, ~p}: result ~p",[Reason, ResultStruct]),
+    lager:debug("{error, ~p}: result ~p",[Reason, ResultStruct]),
     case ResultStruct of
 	{"result",{struct,[{"result", Reason}]}} -> ok;
 	{"error",{struct, Reason }} -> ok;
 	E ->  ok
     end;
 parse_result(ResultStruct, result) ->
-    ?debug("result: result: ~p",[ResultStruct]),
+    lager:debug("result: result: ~p",[ResultStruct]),
     case ResultStruct of
 	{"result", {struct,[{"result", "ok"}| _Tail]}} -> "ok";
 	{"result", {struct,[{"result", Result}| _Tail]}} -> {error, Result};
@@ -1500,11 +1499,11 @@ parse_result(ResultStruct, result) ->
     end;
 parse_result(_ResultStruct, any) ->
     %% Don't check result
-    ?debug("any: result ~p",[_ResultStruct]),
+    lager:debug("any: result ~p",[_ResultStruct]),
     ok;
 parse_result(ResultStruct, _Other) ->
     %% Return everything
-    ?debug("~p: result ~p",[_Other,ResultStruct]),
+    lager:debug("~p: result ~p",[_Other,ResultStruct]),
     ResultStruct.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
