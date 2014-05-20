@@ -10,7 +10,8 @@
   {applications, [
                   kernel,
                   stdlib,
-		  sasl
+                  exo,
+                  sasl
                  ]},
   {mod, { exodm_json_api, []}},
   {env, []}

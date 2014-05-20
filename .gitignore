@@ -1,3 +1,5 @@
 rel/
 logs/
 *~
+*.beam
+*.app

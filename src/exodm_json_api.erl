@@ -1412,7 +1412,6 @@ json_request(Request, KeyValueList, TransId, Options) ->
     case http_post(JsonRequest, Options) of
 	{ok, {http_response, _Version, 200, _, _Header}, Data} ->
 	    String = binary_to_list(Data),
-	    ct:pal("json_request: result: ~p", [String]),
 	    {ok, {struct, Values}} = exo_json:decode_string(String),
 	    {"jsonrpc","2.0"} = lists:keyfind("jsonrpc",1,Values),
 	    {"id",TransId} = lists:keyfind("id",1,Values),
@@ -1438,8 +1437,6 @@ http_post(Request, Options) ->
     Url = proplists:get_value(url, Options),
     User  = proplists:get_value(user, Options),
     Pass  = proplists:get_value(password, Options),
-    ct:pal("http_post: user ~p, json request: ~p~n",
-	[User, lists:flatten(Request)]),
     exo_http:wpost(Url,
 		   [{'Content-Type', "application/json"}] ++ 
 		       exo_http:make_headers(User,Pass),
