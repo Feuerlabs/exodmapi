@@ -24,7 +24,8 @@ curl -u $AUTH -k -X POST $URL -d @- <<EOF
     "params": {
         "repository": "$1",
 	"n": $2,
-	"previous": "$3"
+	"previous": "$3",
+        "direction": "ascending"
     }
 }
 EOF

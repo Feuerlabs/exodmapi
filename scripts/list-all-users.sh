@@ -16,8 +16,7 @@ curl -u $ADMIN_AUTH -k -X POST $URL -d @- <<EOF
     "params": {
 	"n": $1,
 	"previous": "$2",
-        "direction": "ascending",
-        "account" : "${USER_ACCOUNT}"
+        "direction": "ascending"
     }
 }
 EOF
