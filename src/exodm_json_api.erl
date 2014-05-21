@@ -1481,6 +1481,8 @@ parse_result(ResultStruct, {lookup, Items}) ->
 	{"result",{struct,[{"result","ok"},
 			   {Items,{array, [{struct, Item}]}}]}} -> Item;
 	{"result",{struct,[{"result","ok"},
+			   {Items,{array, List}}]}} -> List;
+	{"result",{struct,[{"result","ok"},
 			   {Items,{array, []}}]}} -> []
     end;
 parse_result(ResultStruct, {error, Reason} = E) ->

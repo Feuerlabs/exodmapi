@@ -8,7 +8,9 @@
 
 -module(exodm_dump_account).
 
--include_lib("lager/include/log.hrl").
+%% -include_lib("lager/include/log.hrl").
+-define(info(F, As), io:format((F)++"\n",(As))).
+-define(debug(F, As), io:format((F)++"\n",(As))).
 
 -export([run/1,
          run/2]).
@@ -32,7 +34,7 @@
 %%--------------------------------------------------------------------
 -spec run(AName::string()) -> ok.
 
-run(AName) when is_list(AName) -> 
+run(AName) when is_list(AName) ->
     run(AName, json).
 
 %%--------------------------------------------------------------------
@@ -47,25 +49,28 @@ run(AName) when is_list(AName) ->
 run(AName, json) when is_list(AName)->
     ?info("Dumping account ~s",[AName]),
     %% Mod:configure_api(??),
-    run1(?JSON, #account {aname = AName}).
+    Options = exodm_rc:read(),
+    run(AName, json, Options).
 
+run(AName, json, Options) ->
+    run1(?JSON, #account {aname = AName}, Options).
 
-run1(Mod, _Account=#account {aname = AName}) ->
-    Roles = all(Mod, list_account_roles, "roles", [AName], "", []),
+run1(Mod, _Account=#account {aname = AName}, Options) ->
+    Roles = all(Mod, list_account_roles, "roles", [AName], Options),
     ?info("Roles: ~p",[Roles]),
-    UsersWithRoles = all(Mod, list_account_users, "users", [AName], "", []),
+    UsersWithRoles = all(Mod, list_account_users, "users", [AName], Options),
     ?info("Users: ~p",[decode_users(UsersWithRoles, [])]),
     
     Yangs = 
-        all(Mod, list_yang_modules, "yang-modules", [AName, "user"], "", []),
+        all(Mod, list_yang_modules, "yang-modules", [AName, "user"], Options),
     ?info("Yang modules: ~p",[Yangs]),
-    Sets = all(Mod, list_config_sets, "config-sets", [AName], "", []),
+    Sets = all(Mod, list_config_sets, "config-sets", [AName], Options),
     ?info("Config sets: ~p",[Sets]),
-    Types = all(Mod, list_device_types, "device-types", [AName], "", []),
+    Types = all(Mod, list_device_types, "device-types", [AName], Options),
     ?info("Device types: ~p",[Types]),
-    Groups = all(Mod, list_device_groups, "device-groups", [AName], 0, []),
+    Groups = all(Mod, list_device_groups, "device-groups", [AName], Options),
     ?info("Device groups: ~p",[Groups]),
-    Devs = all(Mod, list_devices, "devices", [AName], "", []),
+    Devs = all(Mod, list_devices, "devices", [AName], Options),
     ?info("Devices: ~p",[Devs]),
 
     %% Store device ids for later checks
@@ -74,21 +79,21 @@ run1(Mod, _Account=#account {aname = AName}) ->
 
     SetMembers = 
         members(Mod, list_config_set_members, "config-set-members", 
-                AName, Sets),
+                AName, Sets, Options),
     ?info("Sets with members: ~p",[SetMembers]),
     VerfiedSetMembers = members_exists(SetMembers, DevIds, []),
     ?info("Sets with verified members: ~p",[VerfiedSetMembers]),
 
     TypeMembers = 
         members(Mod, list_device_type_members, "device-type-members", 
-                AName, Types),
+                AName, Types, Options),
     ?info("Types with members: ~p",[TypeMembers]),
     VerfiedTypeMembers = members_exists(TypeMembers, DevIds, []),
     ?info("Types with verified members: ~p",[VerfiedTypeMembers]),
 
     GroupMembers = 
         members(Mod, list_device_group_members, "device-group-members", 
-                AName, Groups),
+                AName, Groups, Options),
     ?info("Groups with members: ~p",[GroupMembers]),
     VerfiedGroupMembers = members_exists(GroupMembers, DevIds, []),
     ?info("Groups with verified members: ~p",[VerfiedGroupMembers]),   
@@ -96,13 +101,15 @@ run1(Mod, _Account=#account {aname = AName}) ->
     %% Write yang sources to file
     YangSrcs = 
         lookup(Mod, lookup_yang_module, {lookup, "yang-modules"}, 
-               [AName, "user"], Yangs, []),
+               [AName, "user"], Yangs, Options),
     store_yang_srcs(AName, YangSrcs).
     
+all(Mod, Fun, Items, Args, Options) ->
+    all(Mod, Fun, Items, Args, "", Options, []).
 
 %% Fetch recursively from table until all are fetched
-all(Mod, Fun, Items, Args, Prev, Acc) ->
-    case Mod:parse_result(apply(Mod, Fun, Args ++ [?N, Prev]),
+all(Mod, Fun, Items, Args, Prev, Options, Acc) ->
+    case Mod:parse_result(apply(Mod, Fun, Args ++ [?N, Prev]++[Options]),
                           {list, Items}) of
         [] ->
             Acc;
@@ -111,26 +118,29 @@ all(Mod, Fun, Items, Args, Prev, Acc) ->
                 ?N ->
                     %% Might be more to fetch
                     all(Mod, Fun,  Items, 
-                        Args, hd(lists:reverse(List)), List ++ Acc);
+                        Args, hd(lists:reverse(List)), Options, List ++ Acc);
                 _Shorter ->
                     %% All roles fetched
                     List ++ Acc
             end
     end.
 
-lookup(_Mod, _Fun, _Item, _Args, [], Acc) ->
+lookup(Mod, Fun, Result, Args, Ids, Options) ->
+    lookup(Mod, Fun, Result, Args, Ids, Options, []).
+
+lookup(_Mod, _Fun, _Item, _Args, [], _Options, Acc) ->
     Acc;
-lookup(Mod, Fun, Result, Args, [Id | Rest], Acc) ->
-   lookup(Mod, Fun, Result, Args, Rest, 
-          [{Id, Mod:parse_result(apply(Mod, Fun, Args ++ [Id]), Result)} | 
-           Acc]).
+lookup(Mod, Fun, Result, Args, [Id | Rest], Options, Acc) ->
+    Res = apply(Mod, Fun, Args ++ [Id]++[Options]),
+    Value = Mod:parse_result(Res,Result),
+    lookup(Mod, Fun, Result, Args, Rest, Options, [{Id, Value} | Acc]).
 
 %% Fetch all members for a group or type
-members(Mod, Fun, Items, AName, Parents) ->
+members(Mod, Fun, Items, AName, Parents, Options) ->
     lists:foldl(fun(PStruct, Acc) ->
                         Parent = name(PStruct),
                         Members = 
-                            all(Mod, Fun, Items, [AName, Parent], "", []),
+                            all(Mod, Fun, Items, [AName, Parent], Options),
                         [{Parent, Members}  | Acc]
                 end, [], Parents).
 
@@ -145,7 +155,7 @@ name({struct,[{"name", Name}, {"yang", _Yang}, {"notification-url",_Url}]}) ->
     Name;               
 name({struct, DevAttrs}) when is_list(DevAttrs)->
     %% Device
-    {"dev-id", DevId} = lists:keyfind("dev-id", 1, DevAttrs),
+    {"device-id", DevId} = lists:keyfind("device-id", 1, DevAttrs),
     DevId;
 name(Name) when is_list(Name)->
     Name.

@@ -2,7 +2,9 @@
 
 . $HOME/.exodmrc
 
-## protocol = ga_ck3 | exodm_bert
+## protocol: ga_ck3 | exodm_bert
+## push-protocol: exoport_mblox | exodm_mblox | exoport_ios | exoport_http
+##
 if [ $# != 2 ]
 then
     echo "Usage: $0 name protocol"
