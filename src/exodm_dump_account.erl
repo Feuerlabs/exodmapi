@@ -56,6 +56,7 @@ run(AName, json, Options) ->
     run1(?JSON, #account {aname = AName}, Options).
 
 run1(Mod, _Account=#account {aname = AName}, Options) ->
+    application:start(exo),
     Roles = all(Mod, list_account_roles, "roles", [AName], Options),
     ?info("Roles: ~p",[Roles]),
     UsersWithRoles = all(Mod, list_account_users, "users", [AName], Options),
