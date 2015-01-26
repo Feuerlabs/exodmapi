@@ -1408,9 +1408,13 @@ list_config_set_members1(Params, Options) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 json_request(Request, KeyValueList, TransId, Options) ->
-    JsonRequest = json_encode(Request, KeyValueList, TransId),
+    ?debug("json_request: r ~p, kv ~p, tid ~p, o ~p.", 
+	 [Request, KeyValueList, TransId, Options]),
+     JsonRequest = json_encode(Request, KeyValueList, TransId),
+    ?debug("json_request: ~p.", [JsonRequest]),
     case http_post(JsonRequest, Options) of
-	{ok, {http_response, _Version, 200, _, _Header}, Data} ->
+	{ok, _Response = {http_response, _Version, 200, _, _Header}, Data} ->
+	    ?debug("json_request: response ~p.", [_Response]),
 	    String = binary_to_list(Data),
 	    {ok, {struct, Values}} = exo_json:decode_string(String),
 	    {"jsonrpc","2.0"} = lists:keyfind("jsonrpc",1,Values),
@@ -1420,9 +1424,14 @@ json_request(Request, KeyValueList, TransId, Options) ->
 		Result when is_tuple(Result) -> Result;
 		false -> lists:keyfind("error",1, Values)
 	    end;
-	{ok, {http_response, _Version, 401, Reason, _Header}, _Data} ->
+	{ok, _Response = {http_response, _Version, 401, Reason, _Header}, _Data} ->
+	    ?debug("json_request: response ~p.", [_Response]),
+	    {error, Reason};
+	{ok, _Response = {http_response, _Version, 500, Reason, _Header}, _Data} ->
+	    ?debug("json_request: response ~p.", [_Response]),
 	    {error, Reason};
 	{error, _Error} = E ->
+	    ?debug("json_request: error ~p.", [_Error]),
 	    E
     end.
 
@@ -1437,10 +1446,20 @@ http_post(Request, Options) ->
     Url = proplists:get_value(url, Options),
     User  = proplists:get_value(user, Options),
     Pass  = proplists:get_value(password, Options),
-    exo_http:wpost(Url,
-		   [{'Content-Type', "application/json"}] ++ 
-		       exo_http:make_headers(User,Pass),
-		   iolist_to_binary(Request)).
+    Headers =  exo_http:make_headers(User,Pass),
+    ?debug("http_post: url ~p, user ~p, pass ~p, headers ~p.", 
+	   [Url, User, Pass, Headers]),
+    
+    try
+	exo_http:wpost(Url,
+		   [{'Content-Type', "application/json"}] ++ Headers,
+			 iolist_to_binary(Request))
+    catch 
+	error:E ->
+	    ?debug("http_post: error ~p, stack ~p.",  
+		   [E, erlang:get_stacktrace()]),
+	    E
+    end.
 
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1478,8 +1497,6 @@ parse_result(ResultStruct, {lookup, Items}) ->
     %% Lookup functions
     ?debug("{lookup , ~p}: result ~p",[Items, ResultStruct]),
     case ResultStruct of
-	{"result",{struct,[{"result","ok"},
-			   {Items,{array, [{struct, Item}]}}]}} -> Item;
 	{"result",{struct,[{"result","ok"},
 			   {Items,{array, List}}]}} -> List;
 	{"result",{struct,[{"result","ok"},
