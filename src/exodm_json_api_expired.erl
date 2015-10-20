@@ -7,8 +7,6 @@
 
 -module(exodm_json_api_expired).
 
--include_lib("lager/include/log.hrl").
-
 -export([
 	 create_account/4,
 	 lookup_account/1,
@@ -814,46 +812,46 @@ http_post(Request, UserType) ->
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 parse_result(ResultStruct, "ok") ->
     %% Standard
-    ?debug("ok: result ~p",[ResultStruct]),
+    lager:debug("ok: result ~p",[ResultStruct]),
     {"result", {struct,[{"result", "ok"}]}} = ResultStruct,
     ok;
 parse_result(ResultStruct, {item, Item}) ->
-    ?debug("{item , ~p}: result ~p",[Item, ResultStruct]),
+    lager:debug("{item , ~p}: result ~p",[Item, ResultStruct]),
     {"result",{struct,[{"result","ok"},{Item,Value}]}} = ResultStruct,
     Value;
 parse_result(ResultStruct, {list, Items}) ->
     %% List result
-    ?debug("{list, ~p}: result ~p",[Items, ResultStruct]),
+    lager:debug("{list, ~p}: result ~p",[Items, ResultStruct]),
     {"result", {struct,[{Items,{array, List}}]}} = ResultStruct,
     List;
 parse_result(ResultStruct, {lookup, Items}) ->
     %% Lookup functions, returns zero or one item ??
-    ?debug("{item_list , ~p}: result ~p",[Items, ResultStruct]),
+    lager:debug("{item_list , ~p}: result ~p",[Items, ResultStruct]),
     {"result",{struct,[{"result","ok"},{Items,{array, [{struct, Item}]}}]}} = 
         ResultStruct,
-    ?debug("{item_list , ~p}: item ~p",[Items, Item]),
+    lager:debug("{item_list , ~p}: item ~p",[Items, Item]),
     Item;
 parse_result(ResultStruct, {error, Reason}) ->
     %% Expected error
-    ?debug("{error, ~p}: result ~p",[Reason, ResultStruct]),
+    lager:debug("{error, ~p}: result ~p",[Reason, ResultStruct]),
     {"result",{struct,[{"result", Reason}]}} = ResultStruct,
     ok;
 parse_result(ResultStruct, ok_or_error) ->
     %% Standard
-    ?debug("code: result ~p",[ResultStruct]),
+    lager:debug("code: result ~p",[ResultStruct]),
     {"result", {struct,[{"result", Result}]}} = ResultStruct,
     Result;
 parse_result({error, _Reason} = E, ok_or_error) ->
     %% Http error
-    ?debug("error: result ~p",[E]),
+    lager:debug("error: result ~p",[E]),
     E;
 parse_result(_ResultStruct, any) ->
     %% Don't check result
-    ?debug("any: result ~p",[_ResultStruct]),
+    lager:debug("any: result ~p",[_ResultStruct]),
     ok;
 parse_result(ResultStruct, _Other) ->
     %% Return everything
-    ?debug("~p: result ~p",[_Other,ResultStruct]),
+    lager:debug("~p: result ~p",[_Other,ResultStruct]),
     ResultStruct.
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
